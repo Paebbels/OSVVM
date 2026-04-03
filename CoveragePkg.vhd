@@ -102,7 +102,7 @@
 --
 --  This file is part of OSVVM.
 --
---  Copyright (c) 2010 - 2025 by SynthWorks Design Inc.
+--  Copyright (c) 2010 - 2026 by SynthWorks Design Inc.
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
 --  you may not use this file except in compliance with the License.
@@ -1055,6 +1055,7 @@ package CoveragePkg is
     procedure ICover     (ID : CoverageIDType; CovPoint : integer_vector) ;
     procedure ICover     (ID : CoverageIDType; CovPoint : integer) ;
     procedure TCover     (ID : CoverageIDType; A : integer) ;
+    impure function FindBinIndex(ID : CoverageIDType; CovPoint : integer_vector; StartingIndex : integer := 1) return integer ;
 
     procedure ClearCov (ID : CoverageIDType) ;
 
@@ -1371,7 +1372,6 @@ package CoveragePkg is
     procedure ICover( CovPoint : integer) ;
     procedure ICover( CovPoint : integer_vector) ;
     procedure TCover( A : integer) ;
-    impure function FindBinIndex(ID : CoverageIDType; CovPoint : integer_vector; StartingIndex : integer := 1) return integer ;
 
     procedure ClearCov ;
     procedure SetCovZero ;  -- Deprecated
@@ -3491,6 +3491,18 @@ package body CoveragePkg is
     end procedure ICover ;
 
     ------------------------------------------------------------
+    procedure TCover (ID : CoverageIDType; A : integer) is
+    ------------------------------------------------------------
+      constant CoverID : integer := ID.ID ;
+    begin
+      CovStructPtr(CoverID).TCoverCount        := CovStructPtr(CoverID).TCoverCount + 1 ;
+      CovStructPtr(CoverID).TCoverValuePtr.all := CovStructPtr(CoverID).TCoverValuePtr.all(2 to CovStructPtr(CoverID).BinValLength) & A ;
+      if (CovStructPtr(CoverID).TCoverCount >= CovStructPtr(CoverID).BinValLength) then
+        ICover(ID, CovStructPtr(CoverID).TCoverValuePtr.all) ;
+      end if ;
+    end procedure TCover ;
+
+    ------------------------------------------------------------
     impure function FindBinIndex(ID : CoverageIDType; CovPoint : integer_vector; StartingIndex : integer := 1) return integer is
     ------------------------------------------------------------
     begin
@@ -3513,18 +3525,6 @@ package body CoveragePkg is
       end if ;
      end function FindBinIndex ;
      
-    ------------------------------------------------------------
-    procedure TCover (ID : CoverageIDType; A : integer) is
-    ------------------------------------------------------------
-      constant CoverID : integer := ID.ID ;
-    begin
-      CovStructPtr(CoverID).TCoverCount        := CovStructPtr(CoverID).TCoverCount + 1 ;
-      CovStructPtr(CoverID).TCoverValuePtr.all := CovStructPtr(CoverID).TCoverValuePtr.all(2 to CovStructPtr(CoverID).BinValLength) & A ;
-      if (CovStructPtr(CoverID).TCoverCount >= CovStructPtr(CoverID).BinValLength) then
-        ICover(ID, CovStructPtr(CoverID).TCoverValuePtr.all) ;
-      end if ;
-    end procedure TCover ;
-
     ------------------------------------------------------------
     procedure ClearCov (ID : CoverageIDType) is
     ------------------------------------------------------------
