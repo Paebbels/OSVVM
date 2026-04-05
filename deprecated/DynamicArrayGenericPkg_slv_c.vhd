@@ -1,6 +1,6 @@
 --
---  File Name:         DynamicArrayGenericPkg.vhd
---  Design Unit Name:  DynamicArrayGenericPkg
+--  File Name:         DynamicArrayPkg_slv.vhd
+--  Design Unit Name:  DynamicArrayPkg_slv
 --  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
@@ -56,13 +56,19 @@ use work.NameStorePkg.all ;
 use work.LanguageSupport2019Pkg.all ;
 use work.IdFifoPTypePkg.all ; 
 
-package DynamicArrayGenericPkg is 
-  generic (type ArrayType is array (type is range <>) of type is private ) ;
+package DynamicArrayPkg_slv is 
+--  generic (type ArrayType is array (type is range <>) of type is private ) ;
+--
+--  subtype ElementType is ArrayType'element ; 
+--  subtype IndexType   is ArrayType'index ; 
+--
+--  type InternalArrayType is array (integer range <>) of ElementType ; 
 
-  subtype ElementType is ArrayType'element ; 
-  subtype IndexType   is ArrayType'index ; 
+  subtype ArrayType is std_logic_vector ; 
+  subtype ElementType is std_logic ; 
+  subtype IndexType   is natural ; 
+  subtype InternalArrayType is std_logic_vector ; 
 
-  type InternalArrayType is array (integer range <>) of ElementType ; 
   constant FIRST_INDEX   : integer := 0 ; 
 
   type DynamicArrayIDType is record
@@ -259,13 +265,13 @@ package DynamicArrayGenericPkg is
   ------------------------------------------------------------
   procedure       MakeEmpty    (ID : DynamicArrayIDType) ;
 
-end package DynamicArrayGenericPkg ;
+end package DynamicArrayPkg_slv ;
 
 --- ///////////////////////////////////////////////////////////////////////////
 --- ///////////////////////////////////////////////////////////////////////////
 --- ///////////////////////////////////////////////////////////////////////////
 
-package body DynamicArrayGenericPkg is
+package body DynamicArrayPkg_slv is
   constant ITERATOR_LENGTH_INIT : integer := 3 ; 
   constant ITERATOR_LENGTH_GROW : integer := 3 ;
   constant INITIAL_ARRAY_SIZE   : integer := 16 ;
@@ -1374,4 +1380,4 @@ package body DynamicArrayGenericPkg is
     DynamicArrayStore.MakeEmpty(ID) ;
   end procedure MakeEmpty ;
 
-end package body DynamicArrayGenericPkg ;
+end package body DynamicArrayPkg_slv ;

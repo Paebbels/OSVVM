@@ -129,6 +129,14 @@ if {[string compare $::osvvm::ClockResetVersion "2024.05"] == 1}  {
 
 analyze ResizePkg.vhd
 
+if {$::osvvm::ToolName eq "NVC"}  { 
+  analyze DynamicArrayGenericPkg.vhd 
+  analyze DynamicArrayPkg_instances.vhd
+} else {
+  analyze deprecated/DynamicArrayGenericPkg_IntV_c.vhd 
+  analyze deprecated/DynamicArrayGenericPkg_slv_c.vhd 
+}
+
 if {$::osvvm::ToolSupportsGenericPackages}  {
   if {$::osvvm::ToolName ne "XSIM"}  {
     analyze ScoreboardGenericPkg.vhd
