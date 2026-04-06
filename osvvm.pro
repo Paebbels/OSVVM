@@ -133,8 +133,8 @@ if {$::osvvm::ToolName eq "NVC"}  {
   analyze DynamicArrayGenericPkg.vhd 
   analyze DynamicArrayPkg_instances.vhd
 } else {
-  analyze deprecated/DynamicArrayGenericPkg_IntV_c.vhd 
-  analyze deprecated/DynamicArrayGenericPkg_slv_c.vhd 
+  analyze deprecated/DynamicArrayPkg_IntV_c.vhd 
+  analyze deprecated/DynamicArrayPkg_slv_c.vhd 
 }
 
 if {$::osvvm::ToolSupportsGenericPackages}  {
