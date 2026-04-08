@@ -197,9 +197,51 @@ package DynamicArrayGenericPkg is
   ) ;
 
   ------------------------------------------------------------
+  -- Find
+  -- Search for value starting at StartingIndex and return index if found otherwise -1
+  impure function Find (
+    ID              : DynamicArrayIDType ;
+    StartingIndex   : integer ; 
+    iValue          : ElementType
+  ) return integer ;
+
+  impure function Find (
+    ID              : DynamicArrayIDType ;
+    StartingIndex   : integer ; 
+    iValue          : ArrayType
+  ) return integer ;
+
+  ------------------------------------------------------------
+  -- Find
+  -- Search for value starting at Index 0 and return index if found otherwise -1
+  impure function Find (
+    ID              : DynamicArrayIDType ;
+    iValue          : ElementType
+  ) return integer ; 
+
+  impure function Find (
+    ID              : DynamicArrayIDType ;
+    iValue          : ArrayType
+  ) return integer ; 
+
+  ------------------------------------------------------------
+  -- Match
+  -- Return true if value at StartingIndex matches iValue
+  impure function Match (
+    ID              : DynamicArrayIDType ;
+    Index           : integer ; 
+    iValue          : ElementType
+  ) return boolean ;
+
+  impure function Match (
+    ID              : DynamicArrayIDType ;
+    Index           : integer ; 
+    iValue          : ArrayType
+  ) return boolean ; 
+
+  ------------------------------------------------------------
   -- Each Iterator / Copy maintains an internal index to the list
   -- The following provide means to manipulate that index
-
   
   ------------------------------------------------------------
   -- GetIndex
@@ -268,6 +310,19 @@ package DynamicArrayGenericPkg is
   ) ;
 
   ------------------------------------------------------------
+  -- FindNext
+  -- Search for value starting at iterator index and return index if found otherwise -1
+  impure function FindNext (
+    ID              : DynamicArrayIDType ;
+    iValue          : ElementType
+  ) return integer ;
+
+  impure function FindNext (
+    ID              : DynamicArrayIDType ;
+    iValue          : ArrayType
+  ) return integer ; 
+
+  ------------------------------------------------------------
   -- GetPrevious
   -- Decrement index by NumValues and then get value at index  (--index)
   impure function GetPrevious (
@@ -291,6 +346,19 @@ package DynamicArrayGenericPkg is
     ID        : DynamicArrayIDType ;
     iValue    : ArrayType 
   ) ;
+
+  ------------------------------------------------------------
+  -- FindPrevious
+  -- Search for value starting at iterator index and return index if found otherwise -1
+  impure function FindPrevious (
+    ID              : DynamicArrayIDType ;
+    iValue          : ElementType
+  ) return integer ;
+
+  impure function FindPrevious (
+    ID              : DynamicArrayIDType ;
+    iValue          : ArrayType
+  ) return integer ; 
 
   ------------------------------------------------------------
   -- IsEmpty
@@ -328,11 +396,28 @@ package body DynamicArrayGenericPkg is
   constant ITERATOR_LENGTH_INIT : integer := 3 ; 
   constant ITERATOR_LENGTH_GROW : integer := 3 ;
   constant INITIAL_ARRAY_SIZE   : integer := 16 ;
+  constant INDEX_NOT_FOUND      : integer := -1 ; 
+
+  ------------------------------------------------------------
+  -- Package Local - runs only to set constant ELEMENT_TYPE_INITIAL
+  function GetElementTypeDefault return ElementType is
+    variable DefaultValue : ElementType;
+  begin
+    return DefaultValue ;
+  end function GetElementTypeDefault;
+
+  constant ELEMENT_TYPE_INITIAL : ElementType := GetElementTypeDefault ;
+
+  ------------------------------------------------------------
+  -- Package Local - runs only to set ELEMENT_TYPE_INITIAL
+  procedure FailureIdNotInitialized(ID : DynamicArrayIDType ; Name : string) is
+  begin
+    Alert("DynamicArray: " & Name & ", ID not Initialized. IdNum: " & to_string(ID.IdNum) & "  CopyNum: " & to_string(ID.CopyNum), FAILURE) ;
+  end procedure FailureIdNotInitialized ; 
 
   type DynamicArrayPType is protected
     ------------------------------------------------------------
     impure function IsInitialized (ID : DynamicArrayIDType) return boolean ; -- ID Valid
-    impure function IdNotInUse    (ID : DynamicArrayIDType ; Name : string) return boolean ;
 
     ------------------------------------------------------------
     impure function NewID (
@@ -466,7 +551,7 @@ package body DynamicArrayGenericPkg is
     impure function IsInitialized (ID : DynamicArrayIDType) return boolean is
       constant IdNum : integer := ID.IdNum ; 
     begin
-      if IdNum >= 1 and IdNum <= NumItems then 
+      if IdNum >= 1 and IdNum <= MaxItems then 
         if SingletonArrayPtr(IdNum) /= NULL then
           if SingletonArrayPtr(IdNum).IteratorPtr /= NULL and SingletonArrayPtr(IdNum).ArrayPtr /= NULL then
             if SingletonArrayPtr(IdNum).IteratorPtr(ID.CopyNum).InUse then
@@ -477,24 +562,6 @@ package body DynamicArrayGenericPkg is
       end if ; 
       return FALSE ; -- Not Initialized
     end function IsInitialized ;
-
-    ------------------------------------------------------------
-    -- Local to Package
-    impure function IdNotInUse(ID : DynamicArrayIDType ; Name : string) return boolean is
-      constant IdNum : integer := ID.IdNum ; 
-    begin
-      if IdNum >= 1 and IdNum <= MaxItems then 
-        if SingletonArrayPtr(IdNum) /= NULL then
-          if SingletonArrayPtr(IdNum).IteratorPtr /= NULL and SingletonArrayPtr(IdNum).ArrayPtr /= NULL then
-            if SingletonArrayPtr(IdNum).IteratorPtr(ID.CopyNum).InUse then
-              return FALSE ;  -- In USE
-            end if ; 
-          end if ; 
-        end if ; 
-      end if ; 
-      Alert("DynamicArray: " & Name & ", IdNum: " & to_string(ID.IdNum) & "  CopyNum: " & to_string(ID.CopyNum), FAILURE) ;
-      return TRUE ; -- Not In USE
-    end function IdNotInUse ; 
 
     ------------------------------------------------------------
     -- Package Local
@@ -534,7 +601,7 @@ package body DynamicArrayGenericPkg is
     ) return DynamicArrayIDType is
       variable ID           : DynamicArrayIDType ; 
       variable ResolvedSize : integer ; 
-      variable IdNum      : integer ;
+      variable IdNum        : integer ;
     begin
       ResolvedSize := Maximum(Size, INITIAL_ARRAY_SIZE) ;
       -- GrowNumberItems(SingletonArrayPtr, NumItems, 1, MIN_NUM_ITEMS) ;
@@ -905,10 +972,18 @@ package body DynamicArrayGenericPkg is
 
     ------------------------------------------------------------
     impure function IndexNext (ID : DynamicArrayIDType; NumValues : integer := 1) return integer is
-      variable CurIndex : integer ; 
+      variable CurIndex, NextIndex, LastIndex : integer ; 
     begin
       CurIndex := SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex ; 
-      SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex := CurIndex + NumValues ; 
+      NextIndex := CurIndex + NumValues ;
+      LastIndex := SingletonArrayPtr(ID.IdNum).TailIndex ;
+      if NextIndex <= LastIndex then
+        SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex := NextIndex ; 
+      else
+        Alert(SingletonArrayPtr(ID.IdNum).AlertLogID, "IndexNext:  Next Index Exceeds LastIndex" & 
+              "  NextIndex: " & to_string(NextIndex) &
+              "  LastIndex: " & to_string(LastIndex), FAILURE) ; 
+      end if ; 
       return CurIndex ; 
     end function IndexNext ; 
 
@@ -920,11 +995,17 @@ package body DynamicArrayGenericPkg is
 
     ------------------------------------------------------------
     impure function IndexPrevious (ID : DynamicArrayIDType; NumValues : integer := 1) return integer is
-      variable CurIndex : integer ; 
+      variable PreviousIndex : integer ; 
     begin
-      CurIndex := SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex - NumValues ; 
-      SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex := CurIndex ; 
-      return CurIndex ; 
+      PreviousIndex := SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex - NumValues ; 
+      if PreviousIndex >= FIRST_INDEX then
+        SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex := PreviousIndex ; 
+      else
+        Alert(SingletonArrayPtr(ID.IdNum).AlertLogID, "IndexPrevious:  Previous Index is less than FIRST_INDEX" & 
+              "  PreviousIndex: " & to_string(PreviousIndex) &
+              "  FIRST_INDEX: "   & to_string(FIRST_INDEX), FAILURE) ; 
+      end if ; 
+      return PreviousIndex ; 
     end function IndexPrevious ; 
 
     ------------------------------------------------------------
@@ -936,7 +1017,8 @@ package body DynamicArrayGenericPkg is
     ------------------------------------------------------------
     impure function IsEmpty   (ID : DynamicArrayIDType) return boolean is
     begin
-      if IdNotInUse(ID, "IsEmpty") then
+      if not IsInitialized(ID) then
+        FailureIdNotInitialized(ID, "IsEmpty") ; 
         return TRUE ; 
       end if ; 
       return SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex >= SingletonArrayPtr(ID.IdNum).TailIndex ;
@@ -945,7 +1027,8 @@ package body DynamicArrayGenericPkg is
     ------------------------------------------------------------
     impure function Deallocate(ID : DynamicArrayIDType) return DynamicArrayIDType is
     begin
-      if IdNotInUse(ID, "Deallocate") then
+      if not IsInitialized(ID) then
+        FailureIdNotInitialized(ID, "Deallocate") ; 
         return EMPTY_DYNAMIC_ARRAY_ID ; 
       end if ; 
       SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).InUse := FALSE ; 
@@ -964,7 +1047,8 @@ package body DynamicArrayGenericPkg is
     ------------------------------------------------------------
     impure function GetSize (ID : DynamicArrayIDType) return integer is
     begin
-      if IdNotInUse(ID, "GetSize") then
+      if not IsInitialized(ID) then
+        FailureIdNotInitialized(ID, "GetSize") ; 
         return -1 ; 
       end if ; 
       return SingletonArrayPtr(ID.IdNum).TailIndex - 
@@ -974,7 +1058,8 @@ package body DynamicArrayGenericPkg is
     ------------------------------------------------------------
     impure function GetCapacity (ID : DynamicArrayIDType) return integer is
     begin
-      if IdNotInUse(ID, "GetCapacity") then
+      if not IsInitialized(ID) then
+        FailureIdNotInitialized(ID, "GetCapacity") ; 
         return -1 ; 
       end if ; 
       return SingletonArrayPtr(ID.IdNum).Capacity ;
@@ -983,7 +1068,8 @@ package body DynamicArrayGenericPkg is
     ------------------------------------------------------------
     procedure MakeEmpty (ID : DynamicArrayIDType) is
     begin
-      if IdNotInUse(ID, "MakeEmpty") then
+      if not IsInitialized(ID) then
+        FailureIdNotInitialized(ID, "MakeEmpty") ; 
         return ; 
       end if ; 
       SingletonArrayPtr(ID.IdNum).TailIndex := FIRST_INDEX ;
@@ -1033,7 +1119,8 @@ package body DynamicArrayGenericPkg is
   ------------------------------------------------------------
   impure function CopyID ( SiblingID : DynamicArrayIDType ) return DynamicArrayIDType is
   begin
-    if DynamicArrayStore.IdNotInUse(SiblingID, "CopyID") then
+    if not DynamicArrayStore.IsInitialized(SiblingID) then
+      FailureIdNotInitialized(SiblingID, "CopyID") ; 
       return EMPTY_DYNAMIC_ARRAY_ID ;
     end if ; 
     return DynamicArrayStore.CopyID(SiblingID) ;
@@ -1045,7 +1132,8 @@ package body DynamicArrayGenericPkg is
     iValue    : ElementType
   ) is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "Append") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "Append") ; 
       return ;
     end if ; 
     DynamicArrayStore.Append(ID, iValue) ;
@@ -1057,7 +1145,8 @@ package body DynamicArrayGenericPkg is
     iValue    : ArrayType
   ) is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "Append") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "Append") ; 
       return ;
     end if ; 
     DynamicArrayStore.Append(ID, InternalArrayType(iValue)) ;
@@ -1068,10 +1157,10 @@ package body DynamicArrayGenericPkg is
     ID        : DynamicArrayIDType ; 
     Index     : integer 
   ) return ElementType is
-    variable Result : ElementType ;
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "Get") then
-      return Result ;  -- returning default value for type
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "Get") ; 
+      return ELEMENT_TYPE_INITIAL ;  
     end if ; 
     return DynamicArrayStore.Get(ID, Index) ;
   end function Get ;
@@ -1082,9 +1171,10 @@ package body DynamicArrayGenericPkg is
     Index     : integer ;
     NumValues : integer 
   ) return ArrayType is
-    variable Result : InternalArrayType(1 to NumValues) ;
+    constant Result : InternalArrayType := (1 to NumValues => ELEMENT_TYPE_INITIAL) ;
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "Get") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "Get") ; 
       return ArrayType(Result) ; 
     end if ; 
     return ArrayType(DynamicArrayStore.Get(ID, Index, NumValues)) ;
@@ -1097,7 +1187,8 @@ package body DynamicArrayGenericPkg is
     iValue   : ElementType 
   ) is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "Set") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "Set") ; 
       return ; 
     end if ; 
     DynamicArrayStore.Set(ID, Index, iValue) ;
@@ -1110,7 +1201,8 @@ package body DynamicArrayGenericPkg is
     iValue   : ArrayType 
   ) is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "Set") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "Set") ; 
       return ; 
     end if ; 
     DynamicArrayStore.Set(ID, Index, InternalArrayType(iValue)) ;
@@ -1123,7 +1215,8 @@ package body DynamicArrayGenericPkg is
     iValue   : ElementType 
   ) is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "Insert") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "Insert") ; 
       return ; 
     end if ; 
     DynamicArrayStore.Insert(ID, Index, iValue) ;
@@ -1136,7 +1229,8 @@ package body DynamicArrayGenericPkg is
     iValue   : ArrayType 
   ) is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "Insert") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "Insert") ; 
       return ; 
     end if ; 
     DynamicArrayStore.Insert(ID, Index, InternalArrayType(iValue)) ;
@@ -1148,7 +1242,8 @@ package body DynamicArrayGenericPkg is
     iValue   : ElementType 
   ) is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "Prepend") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "Prepend") ; 
       return ; 
     end if ; 
     DynamicArrayStore.Insert(ID, 0, iValue) ;
@@ -1160,7 +1255,8 @@ package body DynamicArrayGenericPkg is
     iValue   : ArrayType 
   ) is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "Prepend") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "Prepend") ; 
       return ; 
     end if ; 
     DynamicArrayStore.Insert(ID, 0, InternalArrayType(iValue)) ;
@@ -1172,7 +1268,8 @@ package body DynamicArrayGenericPkg is
     Index     : integer 
   ) is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "Delete") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "Delete") ; 
       return ; 
     end if ; 
     DynamicArrayStore.Delete(ID, Index) ;
@@ -1185,16 +1282,108 @@ package body DynamicArrayGenericPkg is
     NumValues : integer 
   ) is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "Delete") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "Delete") ; 
       return ; 
     end if ; 
     DynamicArrayStore.Delete(ID, Index, NumValues) ;
   end procedure Delete ;
 
   ------------------------------------------------------------
+  impure function Find (
+    ID              : DynamicArrayIDType ;
+    StartingIndex   : integer ; 
+    iValue          : ElementType
+  ) return integer is
+  begin
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "Find") ; 
+      return INDEX_NOT_FOUND ; 
+    end if ; 
+    for Index in StartingIndex to DynamicArrayStore.GetLastIndex(ID, 1) loop
+      if DynamicArrayStore.Get(ID, Index) = iValue then
+        return Index ; 
+      end if ; 
+    end loop ;
+    return INDEX_NOT_FOUND ; 
+  end function Find ; 
+
+  ------------------------------------------------------------
+  impure function Find (
+    ID              : DynamicArrayIDType ;
+    StartingIndex   : integer ; 
+    iValue          : ArrayType
+  ) return integer is
+    constant NUM_VALUES : integer := iValue'length ; 
+    variable Index, EndingIndex : integer ; 
+  begin
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "Find") ; 
+      return INDEX_NOT_FOUND ; 
+    end if ; 
+    Index := StartingIndex ; 
+    EndingIndex := GetLastIndex(ID, NUM_VALUES) ;
+    while Index <= EndingIndex loop 
+      if ArrayType(DynamicArrayStore.Get(ID, Index, NUM_VALUES)) = iValue then
+        return Index ; 
+      end if ; 
+      Index := Index + NUM_VALUES ; 
+    end loop ;
+    return INDEX_NOT_FOUND ; 
+  end function Find ; 
+
+  ------------------------------------------------------------
+  impure function Find (
+    ID              : DynamicArrayIDType ;
+    iValue          : ElementType
+  ) return integer is
+  begin
+    return Find(ID => ID, StartingIndex => 0, iValue => iValue) ;
+  end function Find ; 
+
+  ------------------------------------------------------------
+  impure function Find (
+    ID              : DynamicArrayIDType ;
+    iValue          : ArrayType
+  ) return integer is
+  begin
+    return Find(ID => ID, StartingIndex => 0, iValue => iValue) ;
+  end function Find ; 
+
+  ------------------------------------------------------------
+  impure function Match (
+    ID              : DynamicArrayIDType ;
+    Index           : integer ; 
+    iValue          : ElementType
+  ) return boolean is
+  begin
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "Match") ; 
+      return FALSE ; 
+    end if ; 
+    return DynamicArrayStore.Get(ID, Index) = iValue ; 
+  end function Match ; 
+
+  ------------------------------------------------------------
+  impure function Match (
+    ID              : DynamicArrayIDType ;
+    Index           : integer ; 
+    iValue          : ArrayType
+  ) return boolean is
+    constant NUM_VALUES : integer := iValue'length ; 
+  begin
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "Match") ; 
+      return FALSE ; 
+    end if ; 
+    return ArrayType(DynamicArrayStore.Get(ID, Index, NUM_VALUES)) = iValue ; 
+  end function Match ; 
+
+  ------------------------------------------------------------
   impure function GetIndex (ID : DynamicArrayIDType) return integer is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "GetIndex") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "GetIndex") ; 
       return -1 ; 
     end if ; 
     return DynamicArrayStore.GetIndex(ID) ; 
@@ -1203,7 +1392,8 @@ package body DynamicArrayGenericPkg is
   ------------------------------------------------------------
   procedure SetIndex (ID : DynamicArrayIDType ; Index : integer := FIRST_INDEX) is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "SetIndex") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "SetIndex") ; 
       return ; 
     end if ; 
     DynamicArrayStore.SetIndex(ID, Index) ;
@@ -1212,7 +1402,8 @@ package body DynamicArrayGenericPkg is
   ------------------------------------------------------------
   impure function GetFirstIndex (ID : DynamicArrayIDType) return integer is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "GetFirstIndex") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "GetFirstIndex") ; 
       return -1 ; 
     end if ; 
     return FIRST_INDEX ; 
@@ -1221,7 +1412,8 @@ package body DynamicArrayGenericPkg is
   ------------------------------------------------------------
   impure function GetLastIndex (ID : DynamicArrayIDType; NumValues : natural := 0) return integer is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "GetLastIndex") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "GetLastIndex") ; 
       return -1 ; 
     end if ; 
     return DynamicArrayStore.GetLastIndex(ID, NumValues) ; 
@@ -1230,7 +1422,8 @@ package body DynamicArrayGenericPkg is
   ------------------------------------------------------------
   impure function IndexNext (ID : DynamicArrayIDType; NumValues : integer := 1) return integer is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "IndexNext") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "IndexNext") ; 
       return -1 ; 
     end if ; 
     return DynamicArrayStore.IndexNext(ID, NumValues) ; 
@@ -1239,7 +1432,8 @@ package body DynamicArrayGenericPkg is
   ------------------------------------------------------------
   impure function HasNext   (ID : DynamicArrayIDType; NumValues : integer := 1) return boolean is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "HasNext") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "HasNext") ; 
       return FALSE ; 
     end if ; 
     return DynamicArrayStore.HasNext(ID, NumValues) ; 
@@ -1248,7 +1442,8 @@ package body DynamicArrayGenericPkg is
   ------------------------------------------------------------
   impure function IndexPrevious (ID : DynamicArrayIDType; NumValues : integer := 1) return integer is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "IndexPrevious") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "IndexPrevious") ; 
       return -1 ; 
     end if ; 
     return DynamicArrayStore.IndexPrevious(ID, NumValues) ; 
@@ -1257,7 +1452,8 @@ package body DynamicArrayGenericPkg is
   ------------------------------------------------------------
   impure function HasPrevious   (ID : DynamicArrayIDType; NumValues : integer := 1) return boolean is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "HasPrevious") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "HasPrevious") ; 
       return FALSE ; 
     end if ; 
     return DynamicArrayStore.HasPrevious(ID, NumValues) ; 
@@ -1267,10 +1463,10 @@ package body DynamicArrayGenericPkg is
   impure function GetNext (
     ID        : DynamicArrayIDType 
   ) return ElementType is
-    variable Result : ElementType ;
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "GetNext") then
-      return Result ; 
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "GetNext") ; 
+      return ELEMENT_TYPE_INITIAL ; 
     end if ; 
     return DynamicArrayStore.Get(ID, DynamicArrayStore.IndexNext(ID, 1)) ; 
   end function GetNext ;
@@ -1280,9 +1476,10 @@ package body DynamicArrayGenericPkg is
     ID        : DynamicArrayIDType ;
     NumValues : natural 
   ) return ArrayType is
-    variable Result : InternalArrayType(1 to NumValues) ;
+    constant Result : InternalArrayType := (1 to NumValues => ELEMENT_TYPE_INITIAL) ;
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "GetNext") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "GetNext") ; 
       return ArrayType(Result) ; 
     end if ; 
     return ArrayType(DynamicArrayStore.Get(ID => ID, Index => DynamicArrayStore.IndexNext(ID, NumValues), NumValues => NumValues)) ; 
@@ -1294,7 +1491,8 @@ package body DynamicArrayGenericPkg is
     iValue    : ElementType 
   ) is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "SetNext") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "SetNext") ; 
       return ; 
     end if ; 
     DynamicArrayStore.Set(ID, DynamicArrayStore.IndexNext(ID, 1), iValue) ; 
@@ -1306,20 +1504,58 @@ package body DynamicArrayGenericPkg is
     iValue    : ArrayType 
   ) is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "SetNext") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "SetNext") ; 
       return ; 
     end if ; 
     DynamicArrayStore.Set(ID, DynamicArrayStore.IndexNext(ID, iValue'length), InternalArrayType(iValue)) ; 
   end procedure SetNext ;
 
   ------------------------------------------------------------
+  impure function FindNext (
+    ID              : DynamicArrayIDType ;
+    iValue          : ElementType
+  ) return integer is
+  begin
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "FindNext") ; 
+      return INDEX_NOT_FOUND ; 
+    end if ; 
+    while DynamicArrayStore.HasNext(ID) loop
+      if GetNext(ID) = iValue then
+        return DynamicArrayStore.GetIndex(ID)-1 ; 
+      end if ; 
+    end loop ;
+    return INDEX_NOT_FOUND ; 
+  end function FindNext ; 
+
+  ------------------------------------------------------------
+  impure function FindNext (
+    ID              : DynamicArrayIDType ;
+    iValue          : ArrayType
+  ) return integer is
+    constant NUM_VALUES : integer := iValue'length ; 
+  begin
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "FindNext") ; 
+      return INDEX_NOT_FOUND ; 
+    end if ; 
+    while DynamicArrayStore.HasNext(ID, NUM_VALUES) loop
+      if GetNext(ID, NUM_VALUES) = iValue then
+        return DynamicArrayStore.GetIndex(ID)-NUM_VALUES ; 
+      end if ; 
+    end loop ;
+    return INDEX_NOT_FOUND ; 
+  end function FindNext ; 
+
+  ------------------------------------------------------------
   impure function GetPrevious (
     ID        : DynamicArrayIDType 
   ) return ElementType is
-    variable Result : ElementType ;
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "GetPrevious") then
-      return Result ; 
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "GetPrevious") ; 
+      return ELEMENT_TYPE_INITIAL ; 
     end if ; 
     return DynamicArrayStore.Get(ID, DynamicArrayStore.IndexPrevious(ID, 1)) ; 
   end function GetPrevious ;
@@ -1329,9 +1565,10 @@ package body DynamicArrayGenericPkg is
     ID        : DynamicArrayIDType ;
     NumValues : natural 
   ) return ArrayType is
-    variable Result : InternalArrayType(1 to NumValues) ;
+    constant Result : InternalArrayType := (1 to NumValues => ELEMENT_TYPE_INITIAL) ;
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "GetPrevious") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "GetPrevious") ; 
       return ArrayType(Result) ; 
     end if ; 
     return ArrayType(DynamicArrayStore.Get(ID => ID, Index => DynamicArrayStore.IndexPrevious(ID, NumValues), NumValues => NumValues)) ; 
@@ -1343,7 +1580,8 @@ package body DynamicArrayGenericPkg is
     iValue    : ElementType 
   ) is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "SetPrevious") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "SetPrevious") ; 
       return ; 
     end if ; 
     DynamicArrayStore.Set(ID, DynamicArrayStore.IndexPrevious(ID, 1), iValue) ; 
@@ -1355,11 +1593,49 @@ package body DynamicArrayGenericPkg is
     iValue    : ArrayType 
   ) is
   begin
-    if DynamicArrayStore.IdNotInUse(ID, "SetPrevious") then
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "SetPrevious") ; 
       return ; 
     end if ; 
     DynamicArrayStore.Set(ID, DynamicArrayStore.IndexPrevious(ID, iValue'length), InternalArrayType(iValue)) ; 
   end procedure SetPrevious ;
+
+  ------------------------------------------------------------
+  impure function FindPrevious (
+    ID              : DynamicArrayIDType ;
+    iValue          : ElementType
+  ) return integer is
+  begin
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "FindPrevious") ; 
+      return INDEX_NOT_FOUND ; 
+    end if ; 
+    while DynamicArrayStore.HasPrevious(ID) loop
+      if GetPrevious(ID) = iValue then
+        return DynamicArrayStore.GetIndex(ID) ; 
+      end if ; 
+    end loop ;
+    return INDEX_NOT_FOUND ; 
+  end function FindPrevious ; 
+
+  ------------------------------------------------------------
+  impure function FindPrevious (
+    ID              : DynamicArrayIDType ;
+    iValue          : ArrayType
+  ) return integer is
+    constant NUM_VALUES : integer := iValue'length ; 
+  begin
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "FindPrevious") ; 
+      return INDEX_NOT_FOUND ; 
+    end if ; 
+    while DynamicArrayStore.HasPrevious(ID, NUM_VALUES) loop
+      if GetPrevious(ID, NUM_VALUES) = iValue then
+        return DynamicArrayStore.GetIndex(ID) ; 
+      end if ; 
+    end loop ;
+    return INDEX_NOT_FOUND ; 
+  end function FindPrevious ; 
 
   ------------------------------------------------------------
   impure function IsEmpty   (ID : DynamicArrayIDType) return boolean is
