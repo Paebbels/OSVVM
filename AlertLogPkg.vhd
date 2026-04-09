@@ -146,7 +146,7 @@ package AlertLogPkg is
   type     LogType                  is (ALWAYS, DEBUG, FINAL, INFO, PASSED) ;  -- NEVER  -- See function IsLogEnableType
   subtype  LogIndexType             is LogType range DEBUG to PASSED ;
   type     LogEnableType            is array (LogIndexType) of boolean ;
-  type     AlertLogReportModeType   is (DISABLED, ENABLED, NONZERO) ;
+  type     AlertLogReportModeType   is (DISABLED, ENABLED, NONZERO, USE_PARENT_ID) ;
   type     AlertLogPrintParentType  is (PRINT_NAME, PRINT_NAME_AND_PARENT) ;
 
   constant  ALERT_LOG_STOP_COUNT_DEFAULT   : AlertCountType := (FAILURE => ALERT_LOG_STOP_COUNT_FAILURE, ERROR => ALERT_LOG_STOP_COUNT_ERROR, WARNING => ALERT_LOG_STOP_COUNT_WARNING) ;
@@ -160,6 +160,7 @@ package AlertLogPkg is
   -- May have its own ID or OSVVM_ALERTLOG_ID as default - most scoreboards allocate their own ID
   constant  OSVVM_SCOREBOARD_ALERTLOG_ID   : AlertLogIDType := OSVVM_ALERTLOG_ID ;
   constant  OSVVM_COVERAGE_ALERTLOG_ID     : AlertLogIDType := OSVVM_ALERTLOG_ID ;
+  constant  OSVVM_DYNAMICARRAY_ALERTLOG_ID : AlertLogIDType := OSVVM_ALERTLOG_ID ;
 
   -- Same as ALERTLOG_DEFAULT_ID
   constant  ALERT_DEFAULT_ID               : AlertLogIDType := ALERTLOG_DEFAULT_ID ;
@@ -6653,7 +6654,11 @@ package body AlertLogPkg is
       FailureInvalidParentID("NewID", ParentID) ; 
     end if ; 
 
-    result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, Goal, PassedGoalSet) ;
+    if ReportMode = USE_PARENT_ID then 
+      result := localParentID ; 
+    else
+      result := AlertLogStruct.NewID(Name, localParentID, ParentIdSet, ReportMode, PrintParent, CreateHierarchy, Goal, PassedGoalSet) ;
+    end if ; 
     -- synthesis translate_on
     return result ;
   end function NewID ;
