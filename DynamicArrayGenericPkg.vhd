@@ -411,8 +411,16 @@ package body DynamicArrayGenericPkg is
   ------------------------------------------------------------
   -- Package Local - runs only to set ELEMENT_TYPE_INITIAL
   procedure FailureIdNotInitialized(ID : DynamicArrayIDType ; Name : string) is
+    function to_str(iValue : integer) return string is
+    begin
+      if iValue = integer'left then
+        return "integer'left" ;
+      else
+        return to_string(iValue) ;
+      end if ; 
+    end function to_str ; 
   begin
-    Alert("DynamicArray: " & Name & ", ID not Initialized. IdNum: " & to_string(ID.IdNum) & "  CopyNum: " & to_string(ID.CopyNum), FAILURE) ;
+    Alert("DynamicArray: " & Name & ", ID not Initialized. IdNum: " & to_str(ID.IdNum) & "  CopyNum: " & to_str(ID.CopyNum), FAILURE) ;
   end procedure FailureIdNotInitialized ; 
 
   type DynamicArrayPType is protected
@@ -748,7 +756,7 @@ package body DynamicArrayGenericPkg is
       Index    : integer 
     ) return boolean is
     begin
-      return Index >= FIRST_INDEX and Index < SingletonArrayPtr(ID.IdNum).TailIndex ;
+      return Index >= FIRST_INDEX and Index < SingletonArrayPtr(ID.IdNum).TailIndex ; 
     end function CheckIndex ; 
 
     ------------------------------------------------------------
@@ -773,7 +781,8 @@ package body DynamicArrayGenericPkg is
       if CheckIndex(ID, StartingIndex) then 
         return SingletonArrayPtr(ID.IdNum).ArrayPtr(StartingIndex) ;  
       else
-        Alert(SingletonArrayPtr(ID.IdNum).AlertLogID, "", FAILURE)  ; 
+        Alert(SingletonArrayPtr(ID.IdNum).AlertLogID, "DynamicArray: Get Index: " & to_string(Index) & 
+              " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & " to " & to_string(SingletonArrayPtr(ID.IdNum).TailIndex-1), FAILURE) ;
         return Result ;
       end if ; 
     end function Get ;
@@ -793,7 +802,8 @@ package body DynamicArrayGenericPkg is
 --        return SingletonArrayPtr(ID.IdNum).ArrayPtr(StartingIndex to EndingIndex) ;
         return GetArrayValue(ID, StartingIndex, EndingIndex) ;
       else
-        Alert(SingletonArrayPtr(ID.IdNum).AlertLogID, "", FAILURE)  ; 
+        Alert(SingletonArrayPtr(ID.IdNum).AlertLogID, "DynamicArray: Get Range: " & to_string(Index) & " to " & to_string(EndingIndex) & 
+              " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & " to " & to_string(SingletonArrayPtr(ID.IdNum).TailIndex-1), FAILURE) ;
         return Result ;  
       end if ; 
     end function Get ;
@@ -810,7 +820,8 @@ package body DynamicArrayGenericPkg is
       if CheckIndex(ID, StartingIndex) then 
         SingletonArrayPtr(ID.IdNum).ArrayPtr(StartingIndex) := iValue ;
       else
-        Alert(SingletonArrayPtr(ID.IdNum).AlertLogID, "", FAILURE)  ; 
+        Alert(SingletonArrayPtr(ID.IdNum).AlertLogID, "DynamicArray: Set Index: " & to_string(Index) & 
+              " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & " to " & to_string(SingletonArrayPtr(ID.IdNum).TailIndex-1), FAILURE) ;
       end if ; 
     end procedure Set ;
 
@@ -828,7 +839,8 @@ package body DynamicArrayGenericPkg is
 --        SingletonArrayPtr(ID.IdNum).ArrayPtr(StartingIndex to EndingIndex) := iValue ;
         SetArrayValue(ID, StartingIndex, EndingIndex, iValue) ;
       else
-        Alert(SingletonArrayPtr(ID.IdNum).AlertLogID, "", FAILURE)  ; 
+        Alert(SingletonArrayPtr(ID.IdNum).AlertLogID, "DynamicArray: Set Range: " & to_string(Index) & " to " & to_string(EndingIndex) & 
+              " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & " to " & to_string(SingletonArrayPtr(ID.IdNum).TailIndex-1), FAILURE) ;
       end if ; 
     end procedure Set ;
 
@@ -845,9 +857,8 @@ package body DynamicArrayGenericPkg is
       OldTailIndex := SingletonArrayPtr(IdNum).TailIndex ; 
       NewSize      := OldTailIndex + 1 ; 
       if Index > OldTailIndex then
-        Alert(SingletonArrayPtr(IdNum).AlertLogID, "Index not in Array." & 
-              "  Index: " & to_string(Index) & 
-              "  ArrayBounds: 0 to " & to_string(OldTailIndex - 1), FAILURE) ; 
+        Alert(SingletonArrayPtr(IdNum).AlertLogID, "DynamicArray: Insert Index: " & to_string(Index) & 
+              " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & " to " & to_string(OldTailIndex-1), FAILURE) ;
         return ; 
       end if ; 
       if SingletonArrayPtr(IdNum).Capacity < NewSize then
@@ -880,9 +891,8 @@ package body DynamicArrayGenericPkg is
       OldTailIndex  := SingletonArrayPtr(IdNum).TailIndex ;
       NewSize       := SingletonArrayPtr(IdNum).TailIndex + ARRAY_SIZE ; 
       if Index > OldTailIndex then
-        Alert(SingletonArrayPtr(IdNum).AlertLogID, "Index not in Dynamic Array." & 
-              "  Index: " & to_string(Index) & 
-              "  ArrayBounds: 0 to " & to_string(OldTailIndex-1), FAILURE) ; 
+        Alert(SingletonArrayPtr(IdNum).AlertLogID, "DynamicArray: Insert Index: " & to_string(Index) & 
+              " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & " to " & to_string(OldTailIndex-1), FAILURE) ;
         return ; 
       end if ; 
       if SingletonArrayPtr(IdNum).Capacity < NewSize then
@@ -911,9 +921,8 @@ package body DynamicArrayGenericPkg is
       IdNum := ID.IdNum ; 
       OldTailIndex := SingletonArrayPtr(IdNum).TailIndex ; 
       if Index >= OldTailIndex then
-        Alert(SingletonArrayPtr(IdNum).AlertLogID, "Index not in Array." & 
-              "  Index: " & to_string(Index) & 
-              "  ArrayBounds: 0 to " & to_string(OldTailIndex-1), FAILURE) ; 
+        Alert(SingletonArrayPtr(IdNum).AlertLogID, "DynamicArray: Delete Index: " & to_string(Index) & 
+              " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & " to " & to_string(OldTailIndex-1), FAILURE) ;
         return ; 
       end if ; 
       -- Move the current values over
@@ -934,9 +943,8 @@ package body DynamicArrayGenericPkg is
       IdNum := ID.IdNum ; 
       OldTailIndex  := SingletonArrayPtr(IdNum).TailIndex ;
       if Index >= OldTailIndex then
-        Alert(SingletonArrayPtr(IdNum).AlertLogID, "Index not in Array." & 
-              "  Index: " & to_string(Index) & 
-              "  ArrayBounds: 0 to " & to_string(OldTailIndex-1), FAILURE) ; 
+        Alert(SingletonArrayPtr(IdNum).AlertLogID, "DynamicArray: Insert Index: " & to_string(Index) & 
+              " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & " to " & to_string(OldTailIndex-1), FAILURE) ;
         return ; 
       end if ; 
       -- Move the current values over
@@ -1017,20 +1025,12 @@ package body DynamicArrayGenericPkg is
     ------------------------------------------------------------
     impure function IsEmpty   (ID : DynamicArrayIDType) return boolean is
     begin
-      if not IsInitialized(ID) then
-        FailureIdNotInitialized(ID, "IsEmpty") ; 
-        return TRUE ; 
-      end if ; 
       return SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex >= SingletonArrayPtr(ID.IdNum).TailIndex ;
     end function IsEmpty ; 
   
     ------------------------------------------------------------
     impure function Deallocate(ID : DynamicArrayIDType) return DynamicArrayIDType is
     begin
-      if not IsInitialized(ID) then
-        FailureIdNotInitialized(ID, "Deallocate") ; 
-        return EMPTY_DYNAMIC_ARRAY_ID ; 
-      end if ; 
       SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).InUse := FALSE ; 
       SingletonArrayPtr(ID.IdNum).ActiveClones := SingletonArrayPtr(ID.IdNum).ActiveClones - 1 ; 
       if SingletonArrayPtr(ID.IdNum).ActiveClones <= 0 then
@@ -1047,10 +1047,6 @@ package body DynamicArrayGenericPkg is
     ------------------------------------------------------------
     impure function GetSize (ID : DynamicArrayIDType) return integer is
     begin
-      if not IsInitialized(ID) then
-        FailureIdNotInitialized(ID, "GetSize") ; 
-        return -1 ; 
-      end if ; 
       return SingletonArrayPtr(ID.IdNum).TailIndex - 
              SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex ;
     end function GetSize ;
@@ -1058,20 +1054,12 @@ package body DynamicArrayGenericPkg is
     ------------------------------------------------------------
     impure function GetCapacity (ID : DynamicArrayIDType) return integer is
     begin
-      if not IsInitialized(ID) then
-        FailureIdNotInitialized(ID, "GetCapacity") ; 
-        return -1 ; 
-      end if ; 
       return SingletonArrayPtr(ID.IdNum).Capacity ;
     end function GetCapacity ;
 
     ------------------------------------------------------------
     procedure MakeEmpty (ID : DynamicArrayIDType) is
     begin
-      if not IsInitialized(ID) then
-        FailureIdNotInitialized(ID, "MakeEmpty") ; 
-        return ; 
-      end if ; 
       SingletonArrayPtr(ID.IdNum).TailIndex := FIRST_INDEX ;
       for i in 1 to SingletonArrayPtr(ID.IdNum).IteratorPtr'length loop 
         SingletonArrayPtr(ID.IdNum).IteratorPtr(i).HeadIndex := FIRST_INDEX ;
@@ -1640,30 +1628,50 @@ package body DynamicArrayGenericPkg is
   ------------------------------------------------------------
   impure function IsEmpty   (ID : DynamicArrayIDType) return boolean is
   begin
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "IsEmpty") ; 
+      return TRUE ; 
+    end if ; 
     return DynamicArrayStore.IsEmpty(ID) ;
   end function IsEmpty ;
 
   ------------------------------------------------------------
   impure function Deallocate(ID : DynamicArrayIDType) return DynamicArrayIDType is
   begin
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "Deallocate") ; 
+      return EMPTY_DYNAMIC_ARRAY_ID ; 
+    end if ; 
     return DynamicArrayStore.Deallocate(ID) ;
   end function Deallocate ; 
 
   ------------------------------------------------------------
   impure function GetSize (ID : DynamicArrayIDType) return integer is
   begin
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "GetSize") ; 
+      return -1 ; 
+    end if ; 
     return DynamicArrayStore.GetSize(ID) ;
   end function GetSize ;
 
   ------------------------------------------------------------
   impure function GetCapacity (ID : DynamicArrayIDType) return integer is
   begin
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "GetCapacity") ; 
+      return -1 ; 
+    end if ; 
     return DynamicArrayStore.GetCapacity(ID) ;
   end function GetCapacity ;
 
   ------------------------------------------------------------
   procedure MakeEmpty (ID : DynamicArrayIDType) is
    begin
+    if not DynamicArrayStore.IsInitialized(ID) then
+      FailureIdNotInitialized(ID, "MakeEmpty") ; 
+      return ; 
+    end if ; 
     DynamicArrayStore.MakeEmpty(ID) ;
   end procedure MakeEmpty ;
 
