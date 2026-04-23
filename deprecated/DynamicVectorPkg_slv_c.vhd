@@ -1,6 +1,6 @@
 --
---  File Name:         DynamicArrayPkg_slv.vhd
---  Design Unit Name:  DynamicArrayPkg_slv
+--  File Name:         DynamicVectorPkg_slv.vhd
+--  Design Unit Name:  DynamicVectorPkg_slv
 --  Revision:          STANDARD VERSION
 --
 --  Maintainer:        Jim Lewis      email:  jim@synthworks.com
@@ -56,7 +56,7 @@ use work.NameStorePkg.all ;
 use work.LanguageSupport2019Pkg.all ;
 use work.IdFifoPTypePkg.all ; 
 
-package DynamicArrayPkg_slv is 
+package DynamicVectorPkg_slv is 
   -- generic (type ArrayType is array (type is range <>) of type is private ) ;
   -- 
   -- -- Package local definitions
@@ -64,88 +64,90 @@ package DynamicArrayPkg_slv is
   -- subtype IndexType   is ArrayType'index ; 
   -- type InternalArrayType is array (integer range <>) of ElementType ;
   
-  subtype ArrayType is std_logic_vector ; 
+  subtype VectorType is std_logic_vector ; 
   subtype ElementType is std_logic ; 
   subtype IndexType   is natural ; 
-  subtype InternalArrayType is std_logic_vector ; 
+  subtype InternalVectorType is std_logic_vector ; 
 
   constant FIRST_INDEX   : integer := 0 ; 
+  constant NO_INDEX      : integer := -1 ; 
+  constant NO_NATURAL    : integer := -1 ; 
 
   ------------------------------------------------------------
-  -- DynamicArrayIDType
+  -- DynamicVectorIDType
   -- ID Type for Dynamic Arrays
-  type DynamicArrayIDType is record
+  type DynamicVectorIDType is record
     IdNum     : integer_max ;  -- A unique list
     CopyNum   : integer_max ;  -- A unique iterator
-  end record DynamicArrayIDType ; 
+  end record DynamicVectorIDType ; 
 
-  constant EMPTY_DYNAMIC_ARRAY_ID : DynamicArrayIDType := (IdNum => 0, CopyNum => 0) ;
+  constant EMPTY_DYNAMIC_ARRAY_ID : DynamicVectorIDType := (IdNum => 0, CopyNum => 0) ;
 
-  type DynamicArrayIDArrayType is array (integer range <>) of DynamicArrayIDType ;  
+  type DynamicVectorIDArrayType is array (integer range <>) of DynamicVectorIDType ;  
   
   ------------------------------------------------------------
   -- IsInitialized
   -- True if singleton has been constructed
-  impure function IsInitialized (ID : DynamicArrayIDType) return boolean ; -- ID Valid
+  impure function IsInitialized (ID : DynamicVectorIDType) return boolean ; -- ID Valid
 
   ------------------------------------------------------------
   -- NewID
   -- Construct a new dynamic array
   impure function NewID (
     Name                : String ;
-    Size                : natural ; 
-    ParentID            : AlertLogIDType          := OSVVM_DYNAMICARRAY_ALERTLOG_ID ;
+    Capacity            : natural ; 
+    ParentID            : AlertLogIDType          := OSVVM_DYNAMICVECTOR_ALERTLOG_ID ;
     ReportMode          : AlertLogReportModeType  := USE_PARENT_ID ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
-  ) return DynamicArrayIDType ;
+  ) return DynamicVectorIDType ;
   
   ------------------------------------------------------------
   -- CopyID
   -- Create a shallow copy of the data structure
   --
-  impure function CopyID ( SiblingID : DynamicArrayIDType ) return DynamicArrayIDType ;
+  impure function CopyID ( SiblingID : DynamicVectorIDType ) return DynamicVectorIDType ;
 
   ------------------------------------------------------------
   -- Append
   -- Add element(s) to the end of the list
   procedure Append (
-    ID        : DynamicArrayIDType ; 
+    ID        : DynamicVectorIDType ; 
     iValue    : ElementType
   ) ;
 
   procedure Append (
-    ID        : DynamicArrayIDType ; 
-    iValue    : ArrayType
+    ID        : DynamicVectorIDType ; 
+    iValue    : VectorType
   ) ;
 
   ------------------------------------------------------------
   -- Get
   -- Return the element(s) at the index
   impure function Get  (
-    ID        : DynamicArrayIDType ; 
+    ID        : DynamicVectorIDType ; 
     Index     : natural 
   ) return ElementType ;
 
   impure function Get  (
-    ID        : DynamicArrayIDType ; 
+    ID        : DynamicVectorIDType ; 
     Index     : natural ;
     NumValues : natural 
-  ) return ArrayType ;
+  ) return VectorType ;
 
   ------------------------------------------------------------
   -- Set
   -- Set the element(s) at the index
   procedure Set (
-    ID       : DynamicArrayIDType ; 
+    ID       : DynamicVectorIDType ; 
     Index    : natural ;
     iValue   : ElementType 
   ) ;
   
   procedure Set (
-    ID       : DynamicArrayIDType ; 
+    ID       : DynamicVectorIDType ; 
     Index    : natural ;
-    iValue   : ArrayType 
+    iValue   : VectorType 
   ) ;
   
   ------------------------------------------------------------
@@ -153,15 +155,15 @@ package DynamicArrayPkg_slv is
   -- Insert element(s) to the list at Index
   -- O(n) operation since array is shifted
   procedure Insert (
-    ID       : DynamicArrayIDType ; 
+    ID       : DynamicVectorIDType ; 
     Index    : natural ;
     iValue   : ElementType 
   ) ;
 
   procedure Insert (
-    ID       : DynamicArrayIDType ; 
+    ID       : DynamicVectorIDType ; 
     Index    : natural ;
-    iValue   : ArrayType 
+    iValue   : VectorType 
   ) ;
 
   ------------------------------------------------------------
@@ -169,13 +171,13 @@ package DynamicArrayPkg_slv is
   -- Prepend element(s) to the list at start of list
   -- O(n) operation since array is shifted
   procedure Prepend (
-    ID       : DynamicArrayIDType ; 
+    ID       : DynamicVectorIDType ; 
     iValue   : ElementType 
   ) ;
   
   procedure Prepend (
-    ID       : DynamicArrayIDType ; 
-    iValue   : ArrayType 
+    ID       : DynamicVectorIDType ; 
+    iValue   : VectorType 
   ) ;
 
   ------------------------------------------------------------
@@ -183,57 +185,57 @@ package DynamicArrayPkg_slv is
   --   Remove element(s) from the list at Index
   --   O(n) operation since array is shifted
   procedure Delete (
-    ID        : DynamicArrayIDType ; 
+    ID        : DynamicVectorIDType ; 
     Index     : natural 
   ) ;
   
   procedure Delete (
-    ID        : DynamicArrayIDType ; 
+    ID        : DynamicVectorIDType ; 
     Index     : natural ;
     NumValues : natural 
   ) ;
 
   ------------------------------------------------------------
   -- Find
-  -- Search for value starting at StartingIndex and return index if found otherwise -1
+  -- Search for value starting at StartingIndex and return index if found otherwise NO_INDEX
   impure function Find (
-    ID              : DynamicArrayIDType ;
+    ID              : DynamicVectorIDType ;
     StartingIndex   : natural ; 
     iValue          : ElementType
   ) return integer ;
 
   impure function Find (
-    ID              : DynamicArrayIDType ;
+    ID              : DynamicVectorIDType ;
     StartingIndex   : natural ; 
-    iValue          : ArrayType
+    iValue          : VectorType
   ) return integer ;
 
   ------------------------------------------------------------
   -- Find
-  -- Search for value starting at Index 0 and return index if found otherwise -1
+  -- Search for value starting at Index 0 and return index if found otherwise NO_INDEX
   impure function Find (
-    ID              : DynamicArrayIDType ;
+    ID              : DynamicVectorIDType ;
     iValue          : ElementType
   ) return integer ; 
 
   impure function Find (
-    ID              : DynamicArrayIDType ;
-    iValue          : ArrayType
+    ID              : DynamicVectorIDType ;
+    iValue          : VectorType
   ) return integer ; 
 
   ------------------------------------------------------------
   -- Match
   -- Return true if value at StartingIndex matches iValue
   impure function Match (
-    ID              : DynamicArrayIDType ;
+    ID              : DynamicVectorIDType ;
     Index           : natural ; 
     iValue          : ElementType
   ) return boolean ;
 
   impure function Match (
-    ID              : DynamicArrayIDType ;
+    ID              : DynamicVectorIDType ;
     Index           : natural ; 
-    iValue          : ArrayType
+    iValue          : VectorType
   ) return boolean ; 
 
   ------------------------------------------------------------
@@ -243,177 +245,174 @@ package DynamicArrayPkg_slv is
   ------------------------------------------------------------
   -- GetIndex
   -- Return the current value of the internal index
-  impure function GetIndex      (ID : DynamicArrayIDType) return integer ;
+  impure function GetIndex      (ID : DynamicVectorIDType) return integer ;
 
   ------------------------------------------------------------
   -- SetIndex
   -- Set the current value of the internal index
-  procedure       SetIndex      (ID : DynamicArrayIDType ; Index : natural := FIRST_INDEX) ;
+  procedure       SetIndex      (ID : DynamicVectorIDType ; Index : natural := FIRST_INDEX) ;
 
   ------------------------------------------------------------
   -- GetFirstIndex
   -- Return the first index in the list
-  impure function GetFirstIndex (ID : DynamicArrayIDType) return integer ;
+  impure function GetFirstIndex (ID : DynamicVectorIDType) return integer ;
 
   ------------------------------------------------------------
   -- GetLastIndex
   -- Return the last index in the list
   -- With NumValues = 0, LastIndex is a reference to the next empty index
-  impure function GetLastIndex  (ID : DynamicArrayIDType; NumValues : natural := 0) return integer ;
+  impure function GetLastIndex  (ID : DynamicVectorIDType; NumValues : natural := 0) return integer ;
 
   ------------------------------------------------------------
   -- IndexNext
   -- Return the current index and then increment index by NumValues
-  impure function IndexNext     (ID : DynamicArrayIDType; NumValues : natural := 1) return integer ;
+  impure function IndexNext     (ID : DynamicVectorIDType; NumValues : natural := 1) return integer ;
 
   ------------------------------------------------------------
   -- HasNext
   -- If the index is incremented by NumValues, will the index be within the list
-  impure function HasNext       (ID : DynamicArrayIDType; NumValues : natural := 1) return boolean ;
+  impure function HasNext       (ID : DynamicVectorIDType; NumValues : natural := 1) return boolean ;
 
   ------------------------------------------------------------
   -- IndexPrevious
   -- Decrement index by NumValues and return the index value
-  impure function IndexPrevious (ID : DynamicArrayIDType; NumValues : natural := 1) return integer ;
+  impure function IndexPrevious (ID : DynamicVectorIDType; NumValues : natural := 1) return integer ;
 
   ------------------------------------------------------------
   -- HasPrevious
   -- If the index is decremented by NumValues, will the index be within the list
-  impure function HasPrevious   (ID : DynamicArrayIDType; NumValues : natural := 1) return boolean ;
+  impure function HasPrevious   (ID : DynamicVectorIDType; NumValues : natural := 1) return boolean ;
 
   ------------------------------------------------------------
   -- GetNext
   -- Get value at index and then increment index (index++)
   impure function GetNext (
-    ID        : DynamicArrayIDType 
+    ID        : DynamicVectorIDType 
   ) return ElementType ; 
 
   impure function GetNext (
-    ID        : DynamicArrayIDType ;
+    ID        : DynamicVectorIDType ;
     NumValues : natural 
-  ) return ArrayType ; 
+  ) return VectorType ; 
 
   ------------------------------------------------------------
   -- SetNext
   -- Set value at index and then increment index (index++)
   procedure SetNext (
-    ID        : DynamicArrayIDType ;
+    ID        : DynamicVectorIDType ;
     iValue    : ElementType 
   ) ;
 
   procedure SetNext (
-    ID        : DynamicArrayIDType ;
-    iValue    : ArrayType 
+    ID        : DynamicVectorIDType ;
+    iValue    : VectorType 
   ) ;
 
   ------------------------------------------------------------
   -- FindNext
-  -- Search for value starting at iterator index and return index if found otherwise -1
+  -- Search for value starting at iterator index and return index if found otherwise NO_INDEX
   impure function FindNext (
-    ID              : DynamicArrayIDType ;
+    ID              : DynamicVectorIDType ;
     iValue          : ElementType
   ) return integer ;
 
   impure function FindNext (
-    ID              : DynamicArrayIDType ;
-    iValue          : ArrayType
+    ID              : DynamicVectorIDType ;
+    iValue          : VectorType
   ) return integer ; 
 
   ------------------------------------------------------------
   -- GetPrevious
   -- Decrement index by NumValues and then get value at index  (--index)
   impure function GetPrevious (
-    ID        : DynamicArrayIDType 
+    ID        : DynamicVectorIDType 
   ) return ElementType ;
 
   impure function GetPrevious (
-    ID        : DynamicArrayIDType ;
+    ID        : DynamicVectorIDType ;
     NumValues : natural 
-  ) return ArrayType ;
+  ) return VectorType ;
 
   ------------------------------------------------------------
   -- SetPrevious
   -- Decrement index and then set value at index  (--index)
   procedure SetPrevious (
-    ID        : DynamicArrayIDType ;
+    ID        : DynamicVectorIDType ;
     iValue    : ElementType 
   ) ;
 
   procedure SetPrevious (
-    ID        : DynamicArrayIDType ;
-    iValue    : ArrayType 
+    ID        : DynamicVectorIDType ;
+    iValue    : VectorType 
   ) ;
 
   ------------------------------------------------------------
   -- FindPrevious
-  -- Search for value starting at iterator index and return index if found otherwise -1
+  -- Search for value starting at iterator index and return index if found otherwise NO_INDEX
   impure function FindPrevious (
-    ID              : DynamicArrayIDType ;
+    ID              : DynamicVectorIDType ;
     iValue          : ElementType
   ) return integer ;
 
   impure function FindPrevious (
-    ID              : DynamicArrayIDType ;
-    iValue          : ArrayType
+    ID              : DynamicVectorIDType ;
+    iValue          : VectorType
   ) return integer ; 
 
   ------------------------------------------------------------
   -- IsEmpty
   -- Does the list have any elements in it
-  impure function IsEmpty       (ID : DynamicArrayIDType) return boolean ;  -- Does ID have storage
+  impure function IsEmpty       (ID : DynamicVectorIDType) return boolean ;  -- Does ID have storage
 
   ------------------------------------------------------------
   -- Deallocate
   -- Deallocate the current copy.  
   -- If no copies remain free up the list.
-  impure function Deallocate    (ID : DynamicArrayIDType) return DynamicArrayIDType; 
+  impure function Deallocate    (ID : DynamicVectorIDType) return DynamicVectorIDType; 
 
   ------------------------------------------------------------
   -- GetSize
   -- Return the number of elements in the list.  
-  impure function GetSize      (ID : DynamicArrayIDType) return integer ;
+  impure function GetSize      (ID : DynamicVectorIDType) return integer ;
 
   ------------------------------------------------------------
   -- GetCapacity
   -- Return the maximum number of elements the list can hold.  
-  impure function GetCapacity  (ID : DynamicArrayIDType) return integer ;
+  impure function GetCapacity  (ID : DynamicVectorIDType) return integer ;
 
   ------------------------------------------------------------
   -- MakeEmpty
   -- Set the size of the list to 0 for all copies of the list
-  procedure       MakeEmpty    (ID : DynamicArrayIDType) ;
+  procedure       MakeEmpty    (ID : DynamicVectorIDType) ;
 
   ------------------------------------------------------------
   -- GetAlertLogID
   -- Return the AlertLogID that is used internally and set during the call to NewID
-  impure function GetAlertLogID (ID : DynamicArrayIDType) return AlertLogIDType ;
+  impure function GetAlertLogID (ID : DynamicVectorIDType) return AlertLogIDType ;
 
 
-end package DynamicArrayPkg_slv ;
+end package DynamicVectorPkg_slv ;
 
 --- ///////////////////////////////////////////////////////////////////////////
 --- ///////////////////////////////////////////////////////////////////////////
 --- ///////////////////////////////////////////////////////////////////////////
 
-package body DynamicArrayPkg_slv is
+package body DynamicVectorPkg_slv is
   constant ITERATOR_LENGTH_INIT : natural := 3 ; 
   constant ITERATOR_LENGTH_GROW : natural := 3 ;
   constant INITIAL_ARRAY_SIZE   : natural := 16 ;
-  constant INDEX_NOT_FOUND      : integer := -1 ; 
 
   ------------------------------------------------------------
-  -- Package Local - runs only to set constant ELEMENT_TYPE_INITIAL
+  -- Package Local 
   function GetElementTypeDefault return ElementType is
     variable DefaultValue : ElementType;
   begin
     return DefaultValue ;
   end function GetElementTypeDefault;
 
-  constant ELEMENT_TYPE_INITIAL : ElementType := GetElementTypeDefault ;
-
   ------------------------------------------------------------
-  -- Package Local - runs only to set ELEMENT_TYPE_INITIAL
-  procedure FailureIdNotInitialized(ID : DynamicArrayIDType ; Name : string) is
+  -- Package Local
+  procedure FailureIdNotInitialized(ID : DynamicVectorIDType ; Name : string) is
     function to_str(iValue : integer) return string is
     begin
       if iValue = integer'left then
@@ -423,112 +422,112 @@ package body DynamicArrayPkg_slv is
       end if ; 
     end function to_str ; 
   begin
-    Alert("DynamicArray: " & Name & ", ID not Initialized. IdNum: " & to_str(ID.IdNum) & "  CopyNum: " & to_str(ID.CopyNum), FAILURE) ;
+    Alert("DynamicVector: " & Name & ", ID not Initialized. IdNum: " & to_str(ID.IdNum) & "  CopyNum: " & to_str(ID.CopyNum), FAILURE) ;
   end procedure FailureIdNotInitialized ; 
 
-  type DynamicArrayPType is protected
+  type DynamicVectorPType is protected
     ------------------------------------------------------------
-    impure function IsInitialized (ID : DynamicArrayIDType) return boolean ; -- ID Valid
+    impure function IsInitialized (ID : DynamicVectorIDType) return boolean ; -- ID Valid
 
     ------------------------------------------------------------
     impure function NewID (
       Name                : String ;
-      Size                : natural ; 
+      Capacity            : natural ; 
       ParentID            : AlertLogIDType ;
       ReportMode          : AlertLogReportModeType  ;  -- These use the ParentAlertID rather than creating their own AlertLogID
       Search              : NameSearchType ;           -- These are always private and cloned to hand off
       PrintParent         : AlertLogPrintParentType 
-    ) return DynamicArrayIDType ;
+    ) return DynamicVectorIDType ;
 
     ------------------------------------------------------------
-    impure function CopyID ( SiblingID : DynamicArrayIDType ) return DynamicArrayIDType ;
+    impure function CopyID ( SiblingID : DynamicVectorIDType ) return DynamicVectorIDType ;
 
     ------------------------------------------------------------
     procedure Append (
-      ID        : DynamicArrayIDType ; 
+      ID        : DynamicVectorIDType ; 
       iValue    : ElementType
     ) ;
 
     procedure Append (
-      ID        : DynamicArrayIDType ; 
-      iValue    : InternalArrayType
+      ID        : DynamicVectorIDType ; 
+      iValue    : InternalVectorType
     ) ;
 
     ------------------------------------------------------------
     impure function Get  (
-      ID        : DynamicArrayIDType ; 
+      ID        : DynamicVectorIDType ; 
       Index     : natural 
     ) return ElementType ;
 
     impure function Get  (
-      ID        : DynamicArrayIDType ; 
+      ID        : DynamicVectorIDType ; 
       Index     : natural ;
       NumValues : natural 
-    ) return InternalArrayType ;
+    ) return InternalVectorType ;
 
     ------------------------------------------------------------
     procedure Set (
-      ID       : DynamicArrayIDType ; 
+      ID       : DynamicVectorIDType ; 
       Index    : natural ;
       iValue   : ElementType 
     ) ;
     
     procedure Set (
-      ID       : DynamicArrayIDType ; 
+      ID       : DynamicVectorIDType ; 
       Index    : natural ;
-      iValue   : InternalArrayType 
+      iValue   : InternalVectorType 
     ) ;
     
     ------------------------------------------------------------
     procedure Insert (
-      ID       : DynamicArrayIDType ; 
+      ID       : DynamicVectorIDType ; 
       Index    : natural ;
       iValue   : ElementType 
     ) ;
     
     procedure Insert (
-      ID       : DynamicArrayIDType ; 
+      ID       : DynamicVectorIDType ; 
       Index    : natural ;
-      iValue   : InternalArrayType 
+      iValue   : InternalVectorType 
     ) ;
 
     ------------------------------------------------------------
     procedure Delete (
-      ID        : DynamicArrayIDType ; 
+      ID        : DynamicVectorIDType ; 
       Index     : natural 
     ) ;
     
     procedure Delete (
-      ID        : DynamicArrayIDType ; 
+      ID        : DynamicVectorIDType ; 
       Index     : natural ;
       NumValues : natural 
     ) ;
     
     ------------------------------------------------------------
-    impure function GetIndex      (ID : DynamicArrayIDType) return integer ;
-    procedure       SetIndex      (ID : DynamicArrayIDType ; Index : natural := FIRST_INDEX) ;
-    impure function GetFirstIndex (ID : DynamicArrayIDType) return integer ;
-    impure function GetLastIndex  (ID : DynamicArrayIDType; NumValues : natural := 0) return integer ;
-    impure function IndexNext     (ID : DynamicArrayIDType; NumValues : natural := 1) return integer ;
-    impure function HasNext       (ID : DynamicArrayIDType; NumValues : natural := 1) return boolean ;
-    impure function IndexPrevious (ID : DynamicArrayIDType; NumValues : natural := 1) return integer ;
-    impure function HasPrevious   (ID : DynamicArrayIDType; NumValues : natural := 1) return boolean ;
+    impure function GetIndex      (ID : DynamicVectorIDType) return integer ;
+    procedure       SetIndex      (ID : DynamicVectorIDType ; Index : natural := FIRST_INDEX) ;
+    impure function GetFirstIndex (ID : DynamicVectorIDType) return integer ;
+    impure function GetLastIndex  (ID : DynamicVectorIDType; NumValues : natural := 0) return integer ;
+    impure function IndexNext     (ID : DynamicVectorIDType; NumValues : natural := 1) return integer ;
+    impure function HasNext       (ID : DynamicVectorIDType; NumValues : natural := 1) return boolean ;
+    impure function IndexPrevious (ID : DynamicVectorIDType; NumValues : natural := 1) return integer ;
+    impure function HasPrevious   (ID : DynamicVectorIDType; NumValues : natural := 1) return boolean ;
 
     ------------------------------------------------------------
-    impure function IsEmpty       (ID : DynamicArrayIDType) return boolean ;  -- Does ID have storage
-    impure function Deallocate    (ID : DynamicArrayIDType) return DynamicArrayIDType ; 
+    impure function IsEmpty       (ID : DynamicVectorIDType) return boolean ;  -- Does ID have storage
+    impure function Deallocate    (ID : DynamicVectorIDType) return DynamicVectorIDType ; 
 
     ------------------------------------------------------------
-    impure function GetSize     (ID : DynamicArrayIDType) return integer ;
-    impure function GetCapacity (ID : DynamicArrayIDType) return integer ;
-    procedure       MakeEmpty   (ID : DynamicArrayIDType) ;
+    impure function GetSize     (ID : DynamicVectorIDType) return integer ;
+    impure function GetCapacity (ID : DynamicVectorIDType) return integer ;
+    procedure       MakeEmpty   (ID : DynamicVectorIDType) ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogID (ID : DynamicArrayIDType) return AlertLogIDType ;
+    impure function GetAlertLogID (ID : DynamicVectorIDType) return AlertLogIDType ;
 
-  end protected DynamicArrayPType ;
+  end protected DynamicVectorPType ;
 
-  type DynamicArrayPType is protected body
+  type DynamicVectorPType is protected body
 
     type IteratorType is record
       HeadIndex   : natural ; 
@@ -538,9 +537,9 @@ package body DynamicArrayPkg_slv is
     type IteratorArrayType is array (natural range <>) of IteratorType ;
     type IteratorArrayPtrType is access IteratorArrayType ; 
 
-    type ArrayPtrType is access InternalArrayType ; 
+    type ArrayPtrType is access InternalVectorType ; 
 
-    type DynamicArrayRecType is record
+    type DynamicVectorRecType is record
       ArrayPtr       : ArrayPtrType ; 
       IteratorPtr    : IteratorArrayPtrType ; 
       TailIndex      : natural ; 
@@ -548,10 +547,10 @@ package body DynamicArrayPkg_slv is
       MaxCopyNum     : natural ; 
       ActiveClones   : natural ; 
       AlertLogID     : AlertLogIDType ; 
-    end record DynamicArrayRecType ; 
+    end record DynamicVectorRecType ; 
     
-    type  DynamicArrayRecPtrType is access DynamicArrayRecType ;
-    type  SingletonArrayType     is array (natural range <>) of DynamicArrayRecPtrType ; 
+    type  DynamicVectorRecPtrType is access DynamicVectorRecType ;
+    type  SingletonArrayType     is array (natural range <>) of DynamicVectorRecPtrType ; 
     type  SingletonArrayPtrType  is access SingletonArrayType ;
 
     variable SingletonArrayPtr   : SingletonArrayPtrType ;   
@@ -562,7 +561,7 @@ package body DynamicArrayPkg_slv is
     variable IdFifo : IdFifoPType ; 
 
     ------------------------------------------------------------
-    impure function IsInitialized (ID : DynamicArrayIDType) return boolean is
+    impure function IsInitialized (ID : DynamicVectorIDType) return boolean is
       constant IdNum : integer := ID.IdNum ; 
     begin
       if IdNum >= 1 and IdNum <= MaxItems then 
@@ -607,19 +606,19 @@ package body DynamicArrayPkg_slv is
     ------------------------------------------------------------
     impure function NewID (
       Name                : String ;
-      Size                : natural ; 
+      Capacity            : natural ; 
       ParentID            : AlertLogIDType ;
       ReportMode          : AlertLogReportModeType  ;  -- These use the ParentAlertID rather than creating their own AlertLogID
       Search              : NameSearchType ;           -- These are always private and cloned to hand off
       PrintParent         : AlertLogPrintParentType 
-    ) return DynamicArrayIDType is
-      variable ID           : DynamicArrayIDType ; 
+    ) return DynamicVectorIDType is
+      variable ID           : DynamicVectorIDType ; 
       variable ResolvedSize : natural ; 
       variable IdNum        : natural ;
     begin
-      ResolvedSize := Maximum(Size, INITIAL_ARRAY_SIZE) ;
+      ResolvedSize := Maximum(Capacity, INITIAL_ARRAY_SIZE) ;
       IdNum := GetNextIdNumber ; 
-      SingletonArrayPtr(IdNum) := new DynamicArrayRecType ;
+      SingletonArrayPtr(IdNum) := new DynamicVectorRecType ;
       SingletonArrayPtr(IdNum).IteratorPtr := new IteratorArrayType'(1 to ITERATOR_LENGTH_INIT => (FIRST_INDEX, FALSE)) ; 
       SingletonArrayPtr(IdNum).IteratorPtr(1).InUse := TRUE ; 
       SingletonArrayPtr(IdNum).TailIndex    := FIRST_INDEX ; 
@@ -627,9 +626,9 @@ package body DynamicArrayPkg_slv is
       SingletonArrayPtr(IdNum).MaxCopyNum  := 1 ; 
       SingletonArrayPtr(IdNum).AlertLogID   := NewID(Name, ParentID, ReportMode, PrintParent, CreateHierarchy => FALSE) ; 
       SingletonArrayPtr(IdNum).Capacity     := ResolvedSize ; 
-      SingletonArrayPtr(IdNum).ArrayPtr     := new InternalArrayType(FIRST_INDEX to FIRST_INDEX - 1 + ResolvedSize ) ;
+      SingletonArrayPtr(IdNum).ArrayPtr     := new InternalVectorType(FIRST_INDEX to FIRST_INDEX - 1 + ResolvedSize ) ;
       if Search /= PRIVATE_NAME then  
-        Alert(SingletonArrayPtr(IdNum).AlertLogID, "DynamicArray, NewID: Search mode ignored.  " & 
+        Alert(SingletonArrayPtr(IdNum).AlertLogID, "DynamicVector, NewID: Search mode ignored.  " & 
               "Search not currently supported.  " &
               "Please submit use model to GitHub issues site.", WARNING) ;
       end if ; 
@@ -639,8 +638,8 @@ package body DynamicArrayPkg_slv is
     end function NewID ;
 
     ------------------------------------------------------------
-    impure function CopyID ( SiblingID : DynamicArrayIDType ) return DynamicArrayIDType is
-      variable ID : DynamicArrayIDType ; 
+    impure function CopyID ( SiblingID : DynamicVectorIDType ) return DynamicVectorIDType is
+      variable ID : DynamicVectorIDType ; 
       variable IdNum, vCopyNum : natural ; 
       variable OrigIteratorLength : natural ; 
       variable OldIteratorPtr, IteratorPtr : IteratorArrayPtrType ; 
@@ -679,7 +678,7 @@ package body DynamicArrayPkg_slv is
       end loop ; 
 
       OldArrayPtr := SingletonArrayPtr(IdNum).ArrayPtr ; 
-      SingletonArrayPtr(IdNum).ArrayPtr := new InternalArrayType(FIRST_INDEX to FIRST_INDEX - 1 + NewCapacity) ;
+      SingletonArrayPtr(IdNum).ArrayPtr := new InternalVectorType(FIRST_INDEX to FIRST_INDEX - 1 + NewCapacity) ;
       SingletonArrayPtr(IdNum).Capacity := NewCapacity ; 
       SingletonArrayPtr(IdNum).ArrayPtr.all(FIRST_INDEX to FIRST_INDEX - 1 + OldCapacity) := OldArrayPtr.all(FIRST_INDEX to FIRST_INDEX - 1 + OldCapacity) ;
       deallocate(OldArrayPtr) ;
@@ -688,12 +687,12 @@ package body DynamicArrayPkg_slv is
     ------------------------------------------------------------
     -- PT Local
     procedure SetArrayValue (
-      ID             : DynamicArrayIDType ; 
+      ID             : DynamicVectorIDType ; 
       StartingIndex  : natural ; 
       EndingIndex    : natural ; 
-      iValue         : InternalArrayType
+      iValue         : InternalVectorType
     ) is
-      alias revValue : InternalArrayType (EndingIndex downto StartingIndex) is iValue ; 
+      alias revValue : InternalVectorType (EndingIndex downto StartingIndex) is iValue ; 
     begin
 --      SingletonArrayPtr(ID.IdNum).ArrayPtr(StartingIndex to EndingIndex) := iValue ; 
       for i in StartingIndex to EndingIndex loop 
@@ -704,11 +703,11 @@ package body DynamicArrayPkg_slv is
     ------------------------------------------------------------
     -- PT Local
     impure function GetArrayValue (
-      ID             : DynamicArrayIDType ; 
+      ID             : DynamicVectorIDType ; 
       StartingIndex  : natural ; 
       EndingIndex    : natural 
-    ) return InternalArrayType is
-      variable Result : InternalArrayType(EndingIndex downto StartingIndex) ;
+    ) return InternalVectorType is
+      variable Result : InternalVectorType(EndingIndex downto StartingIndex) ;
     begin
       for i in StartingIndex to EndingIndex loop 
         Result(i) := SingletonArrayPtr(ID.IdNum).ArrayPtr(i) ;
@@ -719,7 +718,7 @@ package body DynamicArrayPkg_slv is
 
     ------------------------------------------------------------
     procedure Append (
-      ID        : DynamicArrayIDType ; 
+      ID        : DynamicVectorIDType ; 
       iValue    : ElementType
     ) is
       variable EndingIndex, NewSize : natural ;
@@ -737,8 +736,8 @@ package body DynamicArrayPkg_slv is
 
     ------------------------------------------------------------
     procedure Append (
-      ID        : DynamicArrayIDType ; 
-      iValue    : InternalArrayType
+      ID        : DynamicVectorIDType ; 
+      iValue    : InternalVectorType
     ) is
       variable StartingIndex : natural ;
       variable NewSize       : natural ;
@@ -759,7 +758,7 @@ package body DynamicArrayPkg_slv is
 
     ------------------------------------------------------------
     impure function Get  (
-      ID        : DynamicArrayIDType ; 
+      ID        : DynamicVectorIDType ; 
       Index     : natural 
     ) return ElementType is
       variable StartingIndex, TailIndex : natural ; 
@@ -768,21 +767,21 @@ package body DynamicArrayPkg_slv is
       TailIndex     := SingletonArrayPtr(ID.IdNum).TailIndex ;
       if StartingIndex >= TailIndex then 
         Alert(SingletonArrayPtr(ID.IdNum).AlertLogID, 
-              "DynamicArray: Get Index: " & to_string(Index) & 
+              "DynamicVector: Get Index: " & to_string(Index) & 
               " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & 
               " to " & to_string(TailIndex-1), FAILURE) ;
-        return ELEMENT_TYPE_INITIAL ;
+        return GetElementTypeDefault ;
       end if ; 
       return SingletonArrayPtr(ID.IdNum).ArrayPtr(StartingIndex) ;  
     end function Get ;
 
     ------------------------------------------------------------
     impure function Get  (
-      ID        : DynamicArrayIDType ; 
+      ID        : DynamicVectorIDType ; 
       Index     : natural ;
       NumValues : natural 
-    ) return InternalArrayType is
-      constant RESULT : InternalArrayType := (1 to NumValues => ELEMENT_TYPE_INITIAL) ;
+    ) return InternalVectorType is
+--rm      constant RESULT : InternalVectorType := (1 to NumValues => GetElementTypeDefault) ;
       variable StartingIndex, EndingIndex, TailIndex : natural ;
     begin
       StartingIndex := Index ; 
@@ -790,17 +789,18 @@ package body DynamicArrayPkg_slv is
       TailIndex     := SingletonArrayPtr(ID.IdNum).TailIndex ;
       if EndingIndex >= TailIndex then 
         Alert(SingletonArrayPtr(ID.IdNum).AlertLogID, 
-              "DynamicArray: Get Range: " & to_string(Index) & " to " & to_string(EndingIndex) & 
+              "DynamicVector: Get Range: " & to_string(Index) & " to " & to_string(EndingIndex) & 
               " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & 
               " to " & to_string(TailIndex-1), FAILURE) ;
-        return RESULT ;  
+--rm        return RESULT ;  
+        return InternalVectorType'(1 to NumValues => GetElementTypeDefault) ; 
       end if ; 
       return GetArrayValue(ID, StartingIndex, EndingIndex) ;
     end function Get ;
 
     ------------------------------------------------------------
     procedure Set (
-      ID       : DynamicArrayIDType ; 
+      ID       : DynamicVectorIDType ; 
       Index    : natural ;
       iValue   : ElementType 
     ) is
@@ -810,7 +810,7 @@ package body DynamicArrayPkg_slv is
       TailIndex     := SingletonArrayPtr(ID.IdNum).TailIndex ;
       if StartingIndex >= TailIndex then 
         Alert(SingletonArrayPtr(ID.IdNum).AlertLogID, 
-              "DynamicArray: Set Index: " & to_string(Index) & 
+              "DynamicVector: Set Index: " & to_string(Index) & 
               " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & 
               " to " & to_string(TailIndex-1), FAILURE) ;
         return ; 
@@ -820,9 +820,9 @@ package body DynamicArrayPkg_slv is
 
     ------------------------------------------------------------
     procedure Set (
-      ID       : DynamicArrayIDType ; 
+      ID       : DynamicVectorIDType ; 
       Index    : natural ;
-      iValue   : InternalArrayType 
+      iValue   : InternalVectorType 
     ) is
       variable StartingIndex, EndingIndex, TailIndex : natural ; 
     begin
@@ -831,7 +831,7 @@ package body DynamicArrayPkg_slv is
       TailIndex     := SingletonArrayPtr(ID.IdNum).TailIndex ;
       if EndingIndex >= TailIndex then 
         Alert(SingletonArrayPtr(ID.IdNum).AlertLogID, 
-              "DynamicArray: Set Range: " & to_string(Index) & " to " & to_string(EndingIndex) & 
+              "DynamicVector: Set Range: " & to_string(Index) & " to " & to_string(EndingIndex) & 
               " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & 
               " to " & to_string(TailIndex-1), FAILURE) ;
         return ; 
@@ -841,7 +841,7 @@ package body DynamicArrayPkg_slv is
 
     ------------------------------------------------------------
     procedure Insert (
-      ID        : DynamicArrayIDType ; 
+      ID        : DynamicVectorIDType ; 
       Index     : natural ;
       iValue    : ElementType
     ) is
@@ -853,7 +853,7 @@ package body DynamicArrayPkg_slv is
       NewSize      := OldTailIndex + 1 ; 
       if Index > OldTailIndex then
         Alert(SingletonArrayPtr(IdNum).AlertLogID, 
-              "DynamicArray: Insert Index: " & to_string(Index) & 
+              "DynamicVector: Insert Index: " & to_string(Index) & 
               " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & 
               " to " & to_string(OldTailIndex-1), FAILURE) ;
         return ; 
@@ -872,9 +872,9 @@ package body DynamicArrayPkg_slv is
 
     ------------------------------------------------------------
     procedure Insert (
-      ID        : DynamicArrayIDType ; 
+      ID        : DynamicVectorIDType ; 
       Index     : natural ;
-      iValue    : InternalArrayType
+      iValue    : InternalVectorType
     ) is
       variable OldTailIndex    : natural ;
       variable NewSize         : natural ;
@@ -886,7 +886,7 @@ package body DynamicArrayPkg_slv is
       NewSize       := SingletonArrayPtr(IdNum).TailIndex + ARRAY_SIZE ; 
       if Index > OldTailIndex then
         Alert(SingletonArrayPtr(IdNum).AlertLogID, 
-              "DynamicArray: Insert Index: " & to_string(Index) & 
+              "DynamicVector: Insert Index: " & to_string(Index) & 
               " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & 
               " to " & to_string(OldTailIndex-1), FAILURE) ;
         return ; 
@@ -905,7 +905,7 @@ package body DynamicArrayPkg_slv is
 
     ------------------------------------------------------------
     procedure Delete (
-      ID        : DynamicArrayIDType ; 
+      ID        : DynamicVectorIDType ; 
       Index     : natural 
     ) is
       variable OldTailIndex : natural ;
@@ -915,7 +915,7 @@ package body DynamicArrayPkg_slv is
       OldTailIndex := SingletonArrayPtr(IdNum).TailIndex ; 
       if Index >= OldTailIndex then
         Alert(SingletonArrayPtr(IdNum).AlertLogID, 
-              "DynamicArray: Delete Index: " & to_string(Index) & 
+              "DynamicVector: Delete Index: " & to_string(Index) & 
               " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & 
               " to " & to_string(OldTailIndex-1), FAILURE) ;
         return ; 
@@ -928,7 +928,7 @@ package body DynamicArrayPkg_slv is
 
     ------------------------------------------------------------
     procedure Delete (
-      ID        : DynamicArrayIDType ; 
+      ID        : DynamicVectorIDType ; 
       Index     : natural ;
       NumValues : natural 
     ) is
@@ -939,7 +939,7 @@ package body DynamicArrayPkg_slv is
       OldTailIndex  := SingletonArrayPtr(IdNum).TailIndex ;
       if Index >= OldTailIndex then
         Alert(SingletonArrayPtr(IdNum).AlertLogID, 
-              "DynamicArray: Delete Index: " & to_string(Index) & 
+              "DynamicVector: Delete Index: " & to_string(Index) & 
               " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & 
               " to " & to_string(OldTailIndex-1), FAILURE) ;
         return ; 
@@ -951,32 +951,32 @@ package body DynamicArrayPkg_slv is
     end procedure Delete ;
 
     ------------------------------------------------------------
-    impure function GetIndex (ID : DynamicArrayIDType) return integer is
+    impure function GetIndex (ID : DynamicVectorIDType) return integer is
     begin
       return SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex ; 
     end function GetIndex ; 
 
     ------------------------------------------------------------
-    procedure SetIndex (ID : DynamicArrayIDType ; Index : natural := FIRST_INDEX) is
+    procedure SetIndex (ID : DynamicVectorIDType ; Index : natural := FIRST_INDEX) is
     begin
       SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex := Index ;
     end procedure SetIndex ;
 
     ------------------------------------------------------------
-    impure function GetFirstIndex (ID : DynamicArrayIDType) return integer is
+    impure function GetFirstIndex (ID : DynamicVectorIDType) return integer is
     begin
       return FIRST_INDEX ; 
     end function GetFirstIndex ; 
 
     ------------------------------------------------------------
-    impure function GetLastIndex (ID : DynamicArrayIDType; NumValues : natural := 0) return integer is
+    impure function GetLastIndex (ID : DynamicVectorIDType; NumValues : natural := 0) return integer is
     -- With NumValues = 0, LastIndex is a reference to the next empty index
     begin
       return SingletonArrayPtr(ID.IdNum).TailIndex - NumValues ; 
     end function GetLastIndex ; 
 
     ------------------------------------------------------------
-    impure function IndexNext (ID : DynamicArrayIDType; NumValues : natural := 1) return integer is
+    impure function IndexNext (ID : DynamicVectorIDType; NumValues : natural := 1) return integer is
       variable CurIndex, NextIndex, LastIndex : natural ; 
     begin
       CurIndex := SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex ; 
@@ -986,22 +986,22 @@ package body DynamicArrayPkg_slv is
         SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex := NextIndex ; 
       else
         Alert(SingletonArrayPtr(ID.IdNum).AlertLogID, 
-              "DynamicArray: IndexNext Index: " & to_string(CurIndex) & 
+              "DynamicVector: IndexNext Index: " & to_string(CurIndex) & 
               " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & 
               " to " & to_string(LastIndex-1), FAILURE) ;
-        return -1 ;
+        return NO_INDEX ;
       end if ; 
       return CurIndex ; 
     end function IndexNext ; 
 
     ------------------------------------------------------------
-    impure function HasNext   (ID : DynamicArrayIDType; NumValues : natural := 1) return boolean is
+    impure function HasNext   (ID : DynamicVectorIDType; NumValues : natural := 1) return boolean is
     begin
       return SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex + NumValues <= SingletonArrayPtr(ID.IdNum).TailIndex ;
     end function HasNext ; 
 
     ------------------------------------------------------------
-    impure function IndexPrevious (ID : DynamicArrayIDType; NumValues : natural := 1) return integer is
+    impure function IndexPrevious (ID : DynamicVectorIDType; NumValues : natural := 1) return integer is
       variable PreviousIndex : integer ; 
     begin
       PreviousIndex := SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex - NumValues ; 
@@ -1009,28 +1009,28 @@ package body DynamicArrayPkg_slv is
         SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex := PreviousIndex ; 
       else
         Alert(SingletonArrayPtr(ID.IdNum).AlertLogID, 
-              "DynamicArray: IndexPrevious Index: " & to_string(PreviousIndex) & 
+              "DynamicVector: IndexPrevious Index: " & to_string(PreviousIndex) & 
               " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & 
               " to " & to_string(SingletonArrayPtr(ID.IdNum).TailIndex-1), FAILURE) ;
-        return -1 ;
+        return NO_INDEX ;
       end if ; 
       return PreviousIndex ; 
     end function IndexPrevious ; 
 
     ------------------------------------------------------------
-    impure function HasPrevious   (ID : DynamicArrayIDType; NumValues : natural := 1) return boolean is
+    impure function HasPrevious   (ID : DynamicVectorIDType; NumValues : natural := 1) return boolean is
     begin
       return SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex - NumValues >= FIRST_INDEX ;
     end function HasPrevious ; 
   
     ------------------------------------------------------------
-    impure function IsEmpty   (ID : DynamicArrayIDType) return boolean is
+    impure function IsEmpty   (ID : DynamicVectorIDType) return boolean is
     begin
       return SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex >= SingletonArrayPtr(ID.IdNum).TailIndex ;
     end function IsEmpty ; 
   
     ------------------------------------------------------------
-    impure function Deallocate(ID : DynamicArrayIDType) return DynamicArrayIDType is
+    impure function Deallocate(ID : DynamicVectorIDType) return DynamicVectorIDType is
     begin
       SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).InUse := FALSE ; 
       SingletonArrayPtr(ID.IdNum).ActiveClones := SingletonArrayPtr(ID.IdNum).ActiveClones - 1 ; 
@@ -1046,20 +1046,20 @@ package body DynamicArrayPkg_slv is
     end function Deallocate ;
 
     ------------------------------------------------------------
-    impure function GetSize (ID : DynamicArrayIDType) return integer is
+    impure function GetSize (ID : DynamicVectorIDType) return integer is
     begin
       return SingletonArrayPtr(ID.IdNum).TailIndex - 
              SingletonArrayPtr(ID.IdNum).IteratorPtr(ID.CopyNum).HeadIndex ;
     end function GetSize ;
 
     ------------------------------------------------------------
-    impure function GetCapacity (ID : DynamicArrayIDType) return integer is
+    impure function GetCapacity (ID : DynamicVectorIDType) return integer is
     begin
       return SingletonArrayPtr(ID.IdNum).Capacity ;
     end function GetCapacity ;
 
     ------------------------------------------------------------
-    procedure MakeEmpty (ID : DynamicArrayIDType) is
+    procedure MakeEmpty (ID : DynamicVectorIDType) is
     begin
       SingletonArrayPtr(ID.IdNum).TailIndex := FIRST_INDEX ;
       for i in 1 to SingletonArrayPtr(ID.IdNum).IteratorPtr'length loop 
@@ -1068,256 +1068,256 @@ package body DynamicArrayPkg_slv is
     end procedure MakeEmpty ;
 
     ------------------------------------------------------------
-    impure function GetAlertLogID (ID : DynamicArrayIDType) return AlertLogIDType is 
+    impure function GetAlertLogID (ID : DynamicVectorIDType) return AlertLogIDType is 
     begin
       return SingletonArrayPtr(ID.IdNum).AlertLogID ;
     end function GetAlertLogID ;
 
-  end protected body DynamicArrayPType ;
+  end protected body DynamicVectorPType ;
   
   ------------------------------------------------------------
   -- Singleton Data Structure
   ------------------------------------------------------------
-  shared variable DynamicArrayStore : DynamicArrayPType ; 
+  shared variable DynamicVectorStore : DynamicVectorPType ; 
   
   ------------------------------------------------------------
-  impure function IsInitialized (ID : DynamicArrayIDType) return boolean is
+  impure function IsInitialized (ID : DynamicVectorIDType) return boolean is
   begin
-    return DynamicArrayStore.IsInitialized(ID) ;
+    return DynamicVectorStore.IsInitialized(ID) ;
   end function IsInitialized ;
 
   ------------------------------------------------------------
   impure function NewID (
     Name                : String ;
-    Size                : natural ; 
-    ParentID            : AlertLogIDType          := OSVVM_DYNAMICARRAY_ALERTLOG_ID ;
+    Capacity            : natural ; 
+    ParentID            : AlertLogIDType          := OSVVM_DYNAMICVECTOR_ALERTLOG_ID ;
     ReportMode          : AlertLogReportModeType  := USE_PARENT_ID ;
     Search              : NameSearchType          := PRIVATE_NAME ;
     PrintParent         : AlertLogPrintParentType := PRINT_NAME_AND_PARENT
-  ) return DynamicArrayIDType is
+  ) return DynamicVectorIDType is
   begin
-    return DynamicArrayStore.NewID(Name, Size, ParentID, ReportMode, Search, PrintParent) ;
+    return DynamicVectorStore.NewID(Name, Capacity, ParentID, ReportMode, Search, PrintParent) ;
   end function NewID ;
 
   ------------------------------------------------------------
-  impure function CopyID ( SiblingID : DynamicArrayIDType ) return DynamicArrayIDType is
+  impure function CopyID ( SiblingID : DynamicVectorIDType ) return DynamicVectorIDType is
   begin
-    if not DynamicArrayStore.IsInitialized(SiblingID) then
+    if not DynamicVectorStore.IsInitialized(SiblingID) then
       FailureIdNotInitialized(SiblingID, "CopyID") ; 
       return EMPTY_DYNAMIC_ARRAY_ID ;
     end if ; 
-    return DynamicArrayStore.CopyID(SiblingID) ;
+    return DynamicVectorStore.CopyID(SiblingID) ;
   end function CopyID ;
 
   ------------------------------------------------------------
   procedure Append (
-    ID        : DynamicArrayIDType ; 
+    ID        : DynamicVectorIDType ; 
     iValue    : ElementType
   ) is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Append") ; 
       return ;
     end if ; 
-    DynamicArrayStore.Append(ID, iValue) ;
+    DynamicVectorStore.Append(ID, iValue) ;
   end procedure Append ;
 
   ------------------------------------------------------------
   procedure Append (
-    ID        : DynamicArrayIDType ; 
-    iValue    : ArrayType
+    ID        : DynamicVectorIDType ; 
+    iValue    : VectorType
   ) is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Append") ; 
       return ;
     end if ; 
-    DynamicArrayStore.Append(ID, InternalArrayType(iValue)) ;
+    DynamicVectorStore.Append(ID, InternalVectorType(iValue)) ;
   end procedure Append ;
 
   ------------------------------------------------------------
   impure function Get  (
-    ID        : DynamicArrayIDType ; 
+    ID        : DynamicVectorIDType ; 
     Index     : natural 
   ) return ElementType is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Get") ; 
-      return ELEMENT_TYPE_INITIAL ;  
+      return GetElementTypeDefault ;  
     end if ; 
-    return DynamicArrayStore.Get(ID, Index) ;
+    return DynamicVectorStore.Get(ID, Index) ;
   end function Get ;
 
   ------------------------------------------------------------
   impure function Get  (
-    ID        : DynamicArrayIDType ; 
+    ID        : DynamicVectorIDType ; 
     Index     : natural ;
     NumValues : natural 
-  ) return ArrayType is
-    constant RESULT : InternalArrayType := (1 to NumValues => ELEMENT_TYPE_INITIAL) ;
+  ) return VectorType is
+--rm    constant RESULT : InternalVectorType := (1 to NumValues => GetElementTypeDefault) ;
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Get") ; 
-      return ArrayType(RESULT) ; 
+      return VectorType(InternalVectorType'(1 to NumValues => GetElementTypeDefault)) ; 
     end if ; 
-    return ArrayType(DynamicArrayStore.Get(ID, Index, NumValues)) ;
+    return VectorType(DynamicVectorStore.Get(ID, Index, NumValues)) ;
   end function Get ;
 
   ------------------------------------------------------------
   procedure Set (
-    ID       : DynamicArrayIDType ; 
+    ID       : DynamicVectorIDType ; 
     Index    : natural ;
     iValue   : ElementType 
   ) is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Set") ; 
       return ; 
     end if ; 
-    DynamicArrayStore.Set(ID, Index, iValue) ;
+    DynamicVectorStore.Set(ID, Index, iValue) ;
   end procedure Set ;
   
   ------------------------------------------------------------
   procedure Set (
-    ID       : DynamicArrayIDType ; 
+    ID       : DynamicVectorIDType ; 
     Index    : natural ;
-    iValue   : ArrayType 
+    iValue   : VectorType 
   ) is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Set") ; 
       return ; 
     end if ; 
-    DynamicArrayStore.Set(ID, Index, InternalArrayType(iValue)) ;
+    DynamicVectorStore.Set(ID, Index, InternalVectorType(iValue)) ;
   end procedure Set ;
   
   ------------------------------------------------------------
   procedure Insert (
-    ID       : DynamicArrayIDType ; 
+    ID       : DynamicVectorIDType ; 
     Index    : natural ;
     iValue   : ElementType 
   ) is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Insert") ; 
       return ; 
     end if ; 
-    DynamicArrayStore.Insert(ID, Index, iValue) ;
+    DynamicVectorStore.Insert(ID, Index, iValue) ;
   end procedure Insert ;
   
   ------------------------------------------------------------
   procedure Insert (
-    ID       : DynamicArrayIDType ; 
+    ID       : DynamicVectorIDType ; 
     Index    : natural ;
-    iValue   : ArrayType 
+    iValue   : VectorType 
   ) is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Insert") ; 
       return ; 
     end if ; 
-    DynamicArrayStore.Insert(ID, Index, InternalArrayType(iValue)) ;
+    DynamicVectorStore.Insert(ID, Index, InternalVectorType(iValue)) ;
   end procedure Insert ;
   
   ------------------------------------------------------------
   procedure Prepend (
-    ID       : DynamicArrayIDType ; 
+    ID       : DynamicVectorIDType ; 
     iValue   : ElementType 
   ) is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Prepend") ; 
       return ; 
     end if ; 
-    DynamicArrayStore.Insert(ID, 0, iValue) ;
+    DynamicVectorStore.Insert(ID, 0, iValue) ;
   end procedure Prepend ;
   
   ------------------------------------------------------------
   procedure Prepend (
-    ID       : DynamicArrayIDType ; 
-    iValue   : ArrayType 
+    ID       : DynamicVectorIDType ; 
+    iValue   : VectorType 
   ) is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Prepend") ; 
       return ; 
     end if ; 
-    DynamicArrayStore.Insert(ID, 0, InternalArrayType(iValue)) ;
+    DynamicVectorStore.Insert(ID, 0, InternalVectorType(iValue)) ;
   end procedure Prepend ;
   
   ------------------------------------------------------------
   procedure Delete (
-    ID        : DynamicArrayIDType ; 
+    ID        : DynamicVectorIDType ; 
     Index     : natural 
   ) is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Delete") ; 
       return ; 
     end if ; 
-    DynamicArrayStore.Delete(ID, Index) ;
+    DynamicVectorStore.Delete(ID, Index) ;
   end procedure Delete ;
   
   ------------------------------------------------------------
   procedure Delete (
-    ID        : DynamicArrayIDType ; 
+    ID        : DynamicVectorIDType ; 
     Index     : natural ;
     NumValues : natural 
   ) is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Delete") ; 
       return ; 
     end if ; 
-    DynamicArrayStore.Delete(ID, Index, NumValues) ;
+    DynamicVectorStore.Delete(ID, Index, NumValues) ;
   end procedure Delete ;
 
   ------------------------------------------------------------
   impure function Find (
-    ID              : DynamicArrayIDType ;
+    ID              : DynamicVectorIDType ;
     StartingIndex   : natural ; 
     iValue          : ElementType
   ) return integer is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Find") ; 
-      return INDEX_NOT_FOUND ; 
+      return NO_INDEX ; 
     end if ; 
-    for Index in StartingIndex to DynamicArrayStore.GetLastIndex(ID, 1) loop
-      if DynamicArrayStore.Get(ID, Index) = iValue then
+    for Index in StartingIndex to DynamicVectorStore.GetLastIndex(ID, 1) loop
+      if DynamicVectorStore.Get(ID, Index) = iValue then
         return Index ; 
       end if ; 
     end loop ;
-    return INDEX_NOT_FOUND ; 
+    return NO_INDEX ; 
   end function Find ; 
 
   ------------------------------------------------------------
   impure function Find (
-    ID              : DynamicArrayIDType ;
+    ID              : DynamicVectorIDType ;
     StartingIndex   : natural ; 
-    iValue          : ArrayType
+    iValue          : VectorType
   ) return integer is
     constant NUM_VALUES : natural := iValue'length ; 
     variable Index, EndingIndex : integer ; 
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Find") ; 
-      return INDEX_NOT_FOUND ; 
+      return NO_INDEX ; 
     end if ; 
     Index := StartingIndex ; 
     EndingIndex := GetLastIndex(ID, NUM_VALUES) ;
     while Index <= EndingIndex loop 
-      if ArrayType(DynamicArrayStore.Get(ID, Index, NUM_VALUES)) = iValue then
+      if VectorType(DynamicVectorStore.Get(ID, Index, NUM_VALUES)) = iValue then
         return Index ; 
       end if ; 
       Index := Index + NUM_VALUES ; 
     end loop ;
-    return INDEX_NOT_FOUND ; 
+    return NO_INDEX ; 
   end function Find ; 
 
   ------------------------------------------------------------
   impure function Find (
-    ID              : DynamicArrayIDType ;
+    ID              : DynamicVectorIDType ;
     iValue          : ElementType
   ) return integer is
   begin
@@ -1326,8 +1326,8 @@ package body DynamicArrayPkg_slv is
 
   ------------------------------------------------------------
   impure function Find (
-    ID              : DynamicArrayIDType ;
-    iValue          : ArrayType
+    ID              : DynamicVectorIDType ;
+    iValue          : VectorType
   ) return integer is
   begin
     return Find(ID => ID, StartingIndex => 0, iValue => iValue) ;
@@ -1335,349 +1335,350 @@ package body DynamicArrayPkg_slv is
 
   ------------------------------------------------------------
   impure function Match (
-    ID              : DynamicArrayIDType ;
+    ID              : DynamicVectorIDType ;
     Index           : natural ; 
     iValue          : ElementType
   ) return boolean is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Match") ; 
       return FALSE ; 
     end if ; 
-    return DynamicArrayStore.Get(ID, Index) = iValue ; 
+    return DynamicVectorStore.Get(ID, Index) = iValue ; 
   end function Match ; 
 
   ------------------------------------------------------------
   impure function Match (
-    ID              : DynamicArrayIDType ;
+    ID              : DynamicVectorIDType ;
     Index           : natural ; 
-    iValue          : ArrayType
+    iValue          : VectorType
   ) return boolean is
     constant NUM_VALUES : natural := iValue'length ; 
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Match") ; 
       return FALSE ; 
     end if ; 
-    return ArrayType(DynamicArrayStore.Get(ID, Index, NUM_VALUES)) = iValue ; 
+    return VectorType(DynamicVectorStore.Get(ID, Index, NUM_VALUES)) = iValue ; 
   end function Match ; 
 
   ------------------------------------------------------------
-  impure function GetIndex (ID : DynamicArrayIDType) return integer is
+  impure function GetIndex (ID : DynamicVectorIDType) return integer is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "GetIndex") ; 
-      return -1 ; 
+      return NO_INDEX ; 
     end if ; 
-    return DynamicArrayStore.GetIndex(ID) ; 
+    return DynamicVectorStore.GetIndex(ID) ; 
   end function GetIndex ; 
 
   ------------------------------------------------------------
-  procedure SetIndex (ID : DynamicArrayIDType ; Index : natural := FIRST_INDEX) is
+  procedure SetIndex (ID : DynamicVectorIDType ; Index : natural := FIRST_INDEX) is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "SetIndex") ; 
       return ; 
     end if ; 
-    DynamicArrayStore.SetIndex(ID, Index) ;
+    DynamicVectorStore.SetIndex(ID, Index) ;
   end procedure SetIndex ;
 
   ------------------------------------------------------------
-  impure function GetFirstIndex (ID : DynamicArrayIDType) return integer is
+  impure function GetFirstIndex (ID : DynamicVectorIDType) return integer is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "GetFirstIndex") ; 
-      return -1 ; 
+      return NO_INDEX ; 
     end if ; 
     return FIRST_INDEX ; 
   end function GetFirstIndex ; 
 
   ------------------------------------------------------------
-  impure function GetLastIndex (ID : DynamicArrayIDType; NumValues : natural := 0) return integer is
+  impure function GetLastIndex (ID : DynamicVectorIDType; NumValues : natural := 0) return integer is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "GetLastIndex") ; 
-      return -1 ; 
+      return NO_INDEX ; 
     end if ; 
-    return DynamicArrayStore.GetLastIndex(ID, NumValues) ; 
+    return DynamicVectorStore.GetLastIndex(ID, NumValues) ; 
   end function GetLastIndex ; 
 
   ------------------------------------------------------------
-  impure function IndexNext (ID : DynamicArrayIDType; NumValues : natural := 1) return integer is
+  impure function IndexNext (ID : DynamicVectorIDType; NumValues : natural := 1) return integer is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "IndexNext") ; 
-      return -1 ; 
+      return NO_INDEX ; 
     end if ; 
-    return DynamicArrayStore.IndexNext(ID, NumValues) ; 
+    return DynamicVectorStore.IndexNext(ID, NumValues) ; 
   end function IndexNext ; 
 
   ------------------------------------------------------------
-  impure function HasNext   (ID : DynamicArrayIDType; NumValues : natural := 1) return boolean is
+  impure function HasNext   (ID : DynamicVectorIDType; NumValues : natural := 1) return boolean is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "HasNext") ; 
       return FALSE ; 
     end if ; 
-    return DynamicArrayStore.HasNext(ID, NumValues) ; 
+    return DynamicVectorStore.HasNext(ID, NumValues) ; 
   end function HasNext ; 
 
   ------------------------------------------------------------
-  impure function IndexPrevious (ID : DynamicArrayIDType; NumValues : natural := 1) return integer is
+  impure function IndexPrevious (ID : DynamicVectorIDType; NumValues : natural := 1) return integer is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "IndexPrevious") ; 
-      return -1 ; 
+      return NO_INDEX ; 
     end if ; 
-    return DynamicArrayStore.IndexPrevious(ID, NumValues) ; 
+    return DynamicVectorStore.IndexPrevious(ID, NumValues) ; 
   end function IndexPrevious ; 
 
   ------------------------------------------------------------
-  impure function HasPrevious   (ID : DynamicArrayIDType; NumValues : natural := 1) return boolean is
+  impure function HasPrevious   (ID : DynamicVectorIDType; NumValues : natural := 1) return boolean is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "HasPrevious") ; 
       return FALSE ; 
     end if ; 
-    return DynamicArrayStore.HasPrevious(ID, NumValues) ; 
+    return DynamicVectorStore.HasPrevious(ID, NumValues) ; 
   end function HasPrevious ; 
 
   ------------------------------------------------------------
   impure function GetNext (
-    ID        : DynamicArrayIDType 
+    ID        : DynamicVectorIDType 
   ) return ElementType is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "GetNext") ; 
-      return ELEMENT_TYPE_INITIAL ; 
+      return GetElementTypeDefault ; 
     end if ; 
-    return DynamicArrayStore.Get(ID, DynamicArrayStore.IndexNext(ID, 1)) ; 
+    return DynamicVectorStore.Get(ID, DynamicVectorStore.IndexNext(ID, 1)) ; 
   end function GetNext ;
 
   ------------------------------------------------------------
   impure function GetNext (
-    ID        : DynamicArrayIDType ;
+    ID        : DynamicVectorIDType ;
     NumValues : natural 
-  ) return ArrayType is
-    constant RESULT : InternalArrayType := (1 to NumValues => ELEMENT_TYPE_INITIAL) ;
+  ) return VectorType is
+--rm    constant RESULT : InternalVectorType := (1 to NumValues => GetElementTypeDefault) ;
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "GetNext") ; 
-      return ArrayType(RESULT) ; 
+      return VectorType(InternalVectorType'(1 to NumValues => GetElementTypeDefault)) ; 
     end if ; 
-    return ArrayType(DynamicArrayStore.Get(ID => ID, Index => DynamicArrayStore.IndexNext(ID, NumValues), NumValues => NumValues)) ; 
+    return VectorType(DynamicVectorStore.Get(ID => ID, Index => DynamicVectorStore.IndexNext(ID, NumValues), NumValues => NumValues)) ; 
   end function GetNext ;
 
   ------------------------------------------------------------
   procedure SetNext (
-    ID        : DynamicArrayIDType ;
+    ID        : DynamicVectorIDType ;
     iValue    : ElementType 
   ) is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "SetNext") ; 
       return ; 
     end if ; 
-    DynamicArrayStore.Set(ID, DynamicArrayStore.IndexNext(ID, 1), iValue) ; 
+    DynamicVectorStore.Set(ID, DynamicVectorStore.IndexNext(ID, 1), iValue) ; 
   end procedure SetNext ;
 
   ------------------------------------------------------------
   procedure SetNext (
-    ID        : DynamicArrayIDType ;
-    iValue    : ArrayType 
+    ID        : DynamicVectorIDType ;
+    iValue    : VectorType 
   ) is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "SetNext") ; 
       return ; 
     end if ; 
-    DynamicArrayStore.Set(ID, DynamicArrayStore.IndexNext(ID, iValue'length), InternalArrayType(iValue)) ; 
+    DynamicVectorStore.Set(ID, DynamicVectorStore.IndexNext(ID, iValue'length), InternalVectorType(iValue)) ; 
   end procedure SetNext ;
 
   ------------------------------------------------------------
   impure function FindNext (
-    ID              : DynamicArrayIDType ;
+    ID              : DynamicVectorIDType ;
     iValue          : ElementType
   ) return integer is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "FindNext") ; 
-      return INDEX_NOT_FOUND ; 
+      return NO_INDEX ; 
     end if ; 
-    while DynamicArrayStore.HasNext(ID) loop
+    while DynamicVectorStore.HasNext(ID) loop
       if GetNext(ID) = iValue then
-        return DynamicArrayStore.GetIndex(ID)-1 ; 
+        return DynamicVectorStore.GetIndex(ID)-1 ; 
       end if ; 
     end loop ;
-    return INDEX_NOT_FOUND ; 
+    return NO_INDEX ; 
   end function FindNext ; 
 
   ------------------------------------------------------------
   impure function FindNext (
-    ID              : DynamicArrayIDType ;
-    iValue          : ArrayType
+    ID              : DynamicVectorIDType ;
+    iValue          : VectorType
   ) return integer is
     constant NUM_VALUES : natural := iValue'length ; 
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "FindNext") ; 
-      return INDEX_NOT_FOUND ; 
+      return NO_INDEX ; 
     end if ; 
-    while DynamicArrayStore.HasNext(ID, NUM_VALUES) loop
+    while DynamicVectorStore.HasNext(ID, NUM_VALUES) loop
       if GetNext(ID, NUM_VALUES) = iValue then
-        return DynamicArrayStore.GetIndex(ID)-NUM_VALUES ; 
+        return DynamicVectorStore.GetIndex(ID)-NUM_VALUES ; 
       end if ; 
     end loop ;
-    return INDEX_NOT_FOUND ; 
+    return NO_INDEX ; 
   end function FindNext ; 
 
   ------------------------------------------------------------
   impure function GetPrevious (
-    ID        : DynamicArrayIDType 
+    ID        : DynamicVectorIDType 
   ) return ElementType is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "GetPrevious") ; 
-      return ELEMENT_TYPE_INITIAL ; 
+      return GetElementTypeDefault ; 
     end if ; 
-    return DynamicArrayStore.Get(ID, DynamicArrayStore.IndexPrevious(ID, 1)) ; 
+    return DynamicVectorStore.Get(ID, DynamicVectorStore.IndexPrevious(ID, 1)) ; 
   end function GetPrevious ;
 
   ------------------------------------------------------------
   impure function GetPrevious (
-    ID        : DynamicArrayIDType ;
+    ID        : DynamicVectorIDType ;
     NumValues : natural 
-  ) return ArrayType is
-    constant RESULT : InternalArrayType := (1 to NumValues => ELEMENT_TYPE_INITIAL) ;
+  ) return VectorType is
+--rm    constant RESULT : InternalVectorType := (1 to NumValues => GetElementTypeDefault) ;
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "GetPrevious") ; 
-      return ArrayType(RESULT) ; 
+--rm      return VectorType(RESULT) ; 
+      return VectorType(InternalVectorType'(1 to NumValues => GetElementTypeDefault)) ; 
     end if ; 
-    return ArrayType(DynamicArrayStore.Get(ID => ID, Index => DynamicArrayStore.IndexPrevious(ID, NumValues), NumValues => NumValues)) ; 
+    return VectorType(DynamicVectorStore.Get(ID => ID, Index => DynamicVectorStore.IndexPrevious(ID, NumValues), NumValues => NumValues)) ; 
   end function GetPrevious ;
 
   ------------------------------------------------------------
   procedure SetPrevious (
-    ID        : DynamicArrayIDType ;
+    ID        : DynamicVectorIDType ;
     iValue    : ElementType 
   ) is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "SetPrevious") ; 
       return ; 
     end if ; 
-    DynamicArrayStore.Set(ID, DynamicArrayStore.IndexPrevious(ID, 1), iValue) ; 
+    DynamicVectorStore.Set(ID, DynamicVectorStore.IndexPrevious(ID, 1), iValue) ; 
   end procedure SetPrevious ;
 
   ------------------------------------------------------------
   procedure SetPrevious (
-    ID        : DynamicArrayIDType ;
-    iValue    : ArrayType 
+    ID        : DynamicVectorIDType ;
+    iValue    : VectorType 
   ) is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "SetPrevious") ; 
       return ; 
     end if ; 
-    DynamicArrayStore.Set(ID, DynamicArrayStore.IndexPrevious(ID, iValue'length), InternalArrayType(iValue)) ; 
+    DynamicVectorStore.Set(ID, DynamicVectorStore.IndexPrevious(ID, iValue'length), InternalVectorType(iValue)) ; 
   end procedure SetPrevious ;
 
   ------------------------------------------------------------
   impure function FindPrevious (
-    ID              : DynamicArrayIDType ;
+    ID              : DynamicVectorIDType ;
     iValue          : ElementType
   ) return integer is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "FindPrevious") ; 
-      return INDEX_NOT_FOUND ; 
+      return NO_INDEX ; 
     end if ; 
-    while DynamicArrayStore.HasPrevious(ID) loop
+    while DynamicVectorStore.HasPrevious(ID) loop
       if GetPrevious(ID) = iValue then
-        return DynamicArrayStore.GetIndex(ID) ; 
+        return DynamicVectorStore.GetIndex(ID) ; 
       end if ; 
     end loop ;
-    return INDEX_NOT_FOUND ; 
+    return NO_INDEX ; 
   end function FindPrevious ; 
 
   ------------------------------------------------------------
   impure function FindPrevious (
-    ID              : DynamicArrayIDType ;
-    iValue          : ArrayType
+    ID              : DynamicVectorIDType ;
+    iValue          : VectorType
   ) return integer is
     constant NUM_VALUES : natural := iValue'length ; 
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "FindPrevious") ; 
-      return INDEX_NOT_FOUND ; 
+      return NO_INDEX ; 
     end if ; 
-    while DynamicArrayStore.HasPrevious(ID, NUM_VALUES) loop
+    while DynamicVectorStore.HasPrevious(ID, NUM_VALUES) loop
       if GetPrevious(ID, NUM_VALUES) = iValue then
-        return DynamicArrayStore.GetIndex(ID) ; 
+        return DynamicVectorStore.GetIndex(ID) ; 
       end if ; 
     end loop ;
-    return INDEX_NOT_FOUND ; 
+    return NO_INDEX ; 
   end function FindPrevious ; 
 
   ------------------------------------------------------------
-  impure function IsEmpty   (ID : DynamicArrayIDType) return boolean is
+  impure function IsEmpty   (ID : DynamicVectorIDType) return boolean is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "IsEmpty") ; 
       return TRUE ; 
     end if ; 
-    return DynamicArrayStore.IsEmpty(ID) ;
+    return DynamicVectorStore.IsEmpty(ID) ;
   end function IsEmpty ;
 
   ------------------------------------------------------------
-  impure function Deallocate(ID : DynamicArrayIDType) return DynamicArrayIDType is
+  impure function Deallocate(ID : DynamicVectorIDType) return DynamicVectorIDType is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Deallocate") ; 
       return EMPTY_DYNAMIC_ARRAY_ID ; 
     end if ; 
-    return DynamicArrayStore.Deallocate(ID) ;
+    return DynamicVectorStore.Deallocate(ID) ;
   end function Deallocate ; 
 
   ------------------------------------------------------------
-  impure function GetSize (ID : DynamicArrayIDType) return integer is
+  impure function GetSize (ID : DynamicVectorIDType) return integer is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "GetSize") ; 
-      return -1 ; 
+      return NO_NATURAL ; 
     end if ; 
-    return DynamicArrayStore.GetSize(ID) ;
+    return DynamicVectorStore.GetSize(ID) ;
   end function GetSize ;
 
   ------------------------------------------------------------
-  impure function GetCapacity (ID : DynamicArrayIDType) return integer is
+  impure function GetCapacity (ID : DynamicVectorIDType) return integer is
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "GetCapacity") ; 
-      return -1 ; 
+      return NO_NATURAL ; 
     end if ; 
-    return DynamicArrayStore.GetCapacity(ID) ;
+    return DynamicVectorStore.GetCapacity(ID) ;
   end function GetCapacity ;
 
   ------------------------------------------------------------
-  procedure MakeEmpty (ID : DynamicArrayIDType) is
+  procedure MakeEmpty (ID : DynamicVectorIDType) is
    begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "MakeEmpty") ; 
       return ; 
     end if ; 
-    DynamicArrayStore.MakeEmpty(ID) ;
+    DynamicVectorStore.MakeEmpty(ID) ;
   end procedure MakeEmpty ;
 
   ------------------------------------------------------------
-  impure function GetAlertLogID (ID : DynamicArrayIDType) return AlertLogIDType is 
+  impure function GetAlertLogID (ID : DynamicVectorIDType) return AlertLogIDType is 
   begin
-    if not DynamicArrayStore.IsInitialized(ID) then
+    if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "GetAlertLogID") ; 
       return ALERTLOG_ID_UNINITIALZED ; 
     end if ; 
-    return DynamicArrayStore.GetAlertLogID(ID) ;
+    return DynamicVectorStore.GetAlertLogID(ID) ;
   end function GetAlertLogID ;
 
-end package body DynamicArrayPkg_slv ;
+end package body DynamicVectorPkg_slv ;
