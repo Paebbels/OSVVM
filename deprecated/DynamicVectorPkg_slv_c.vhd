@@ -57,12 +57,12 @@ use work.LanguageSupport2019Pkg.all ;
 use work.IdFifoPTypePkg.all ; 
 
 package DynamicVectorPkg_slv is 
-  -- generic (type ArrayType is array (type is range <>) of type is private ) ;
+  -- generic (type VectorType is array (type is range <>) of type is private ) ;
   -- 
   -- -- Package local definitions
-  -- subtype ElementType is ArrayType'element ; 
-  -- subtype IndexType   is ArrayType'index ; 
-  -- type InternalArrayType is array (integer range <>) of ElementType ;
+  -- subtype ElementType is VectorType'element ; 
+  -- subtype IndexType   is VectorType'index ; 
+  -- type InternalVectorType is array (integer range <>) of ElementType ;
   
   subtype VectorType is std_logic_vector ; 
   subtype ElementType is std_logic ; 
@@ -413,16 +413,12 @@ package body DynamicVectorPkg_slv is
   ------------------------------------------------------------
   -- Package Local
   procedure FailureIdNotInitialized(ID : DynamicVectorIDType ; Name : string) is
-    function to_str(iValue : integer) return string is
-    begin
-      if iValue = integer'left then
-        return "integer'left" ;
-      else
-        return to_string(iValue) ;
-      end if ; 
-    end function to_str ; 
   begin
-    Alert("DynamicVector: " & Name & ", ID not Initialized. IdNum: " & to_str(ID.IdNum) & "  CopyNum: " & to_str(ID.CopyNum), FAILURE) ;
+    if ID.IdNum /= integer'left then 
+      Alert("DynamicVector: " & Name & ", invalid ID. IdNum: " & to_string(ID.IdNum) & "  CopyNum: " & to_string(ID.CopyNum), FAILURE) ;
+    else
+      Alert("DynamicVector: " & Name & ", ID not Initialized. If ID is a signal, be sure to do a ""wait for 0 ns"" after NewID.", FAILURE) ;
+    end if ; 
   end procedure FailureIdNotInitialized ; 
 
   type DynamicVectorPType is protected

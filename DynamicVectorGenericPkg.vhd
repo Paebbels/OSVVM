@@ -407,16 +407,12 @@ package body DynamicVectorGenericPkg is
   ------------------------------------------------------------
   -- Package Local
   procedure FailureIdNotInitialized(ID : DynamicVectorIDType ; Name : string) is
-    function to_str(iValue : integer) return string is
-    begin
-      if iValue = integer'left then
-        return "integer'left" ;
-      else
-        return to_string(iValue) ;
-      end if ; 
-    end function to_str ; 
   begin
-    Alert("DynamicVector: " & Name & ", ID not Initialized. IdNum: " & to_str(ID.IdNum) & "  CopyNum: " & to_str(ID.CopyNum), FAILURE) ;
+    if ID.IdNum /= integer'left then 
+      Alert("DynamicVector: " & Name & ", invalid ID. IdNum: " & to_string(ID.IdNum) & "  CopyNum: " & to_string(ID.CopyNum), FAILURE) ;
+    else
+      Alert("DynamicVector: " & Name & ", ID not Initialized. If ID is a signal, be sure to do a ""wait for 0 ns"" after NewID.", FAILURE) ;
+    end if ; 
   end procedure FailureIdNotInitialized ; 
 
   type DynamicVectorPType is protected
@@ -775,7 +771,6 @@ package body DynamicVectorGenericPkg is
       Index     : natural ;
       NumValues : natural 
     ) return InternalVectorType is
---rm      constant RESULT : InternalVectorType := (1 to NumValues => GetElementTypeDefault) ;
       variable StartingIndex, EndingIndex, TailIndex : natural ;
     begin
       StartingIndex := Index ; 
@@ -786,7 +781,6 @@ package body DynamicVectorGenericPkg is
               "DynamicVector: Get Range: " & to_string(Index) & " to " & to_string(EndingIndex) & 
               " outside of DyanmicArray range: " & to_string(FIRST_INDEX) & 
               " to " & to_string(TailIndex-1), FAILURE) ;
---rm        return RESULT ;  
         return InternalVectorType'(1 to NumValues => GetElementTypeDefault) ; 
       end if ; 
       return GetArrayValue(ID, StartingIndex, EndingIndex) ;
@@ -1148,7 +1142,6 @@ package body DynamicVectorGenericPkg is
     Index     : natural ;
     NumValues : natural 
   ) return VectorType is
---rm    constant RESULT : InternalVectorType := (1 to NumValues => GetElementTypeDefault) ;
   begin
     if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "Get") ; 
@@ -1453,7 +1446,6 @@ package body DynamicVectorGenericPkg is
     ID        : DynamicVectorIDType ;
     NumValues : natural 
   ) return VectorType is
---rm    constant RESULT : InternalVectorType := (1 to NumValues => GetElementTypeDefault) ;
   begin
     if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "GetNext") ; 
@@ -1542,11 +1534,9 @@ package body DynamicVectorGenericPkg is
     ID        : DynamicVectorIDType ;
     NumValues : natural 
   ) return VectorType is
---rm    constant RESULT : InternalVectorType := (1 to NumValues => GetElementTypeDefault) ;
   begin
     if not DynamicVectorStore.IsInitialized(ID) then
       FailureIdNotInitialized(ID, "GetPrevious") ; 
---rm      return VectorType(RESULT) ; 
       return VectorType(InternalVectorType'(1 to NumValues => GetElementTypeDefault)) ; 
     end if ; 
     return VectorType(DynamicVectorStore.Get(ID => ID, Index => DynamicVectorStore.IndexPrevious(ID, NumValues), NumValues => NumValues)) ; 
