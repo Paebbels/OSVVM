@@ -412,13 +412,13 @@ Cross coverage examines the relationships between different objects, such as mak
 been used with an ALU. The hardware we are working with is as shown below. Note that the test plan will also be
 concerned about what values are applied to the adder. We are not intending to address that part of the test here.
 
-.. figure:: images/CoveragePkg/Page13-1.png
+.. figure:: _static/images/CoveragePkg/Page13-1.png
    :width: 448px
 
 
 Cross coverage for SRC1 crossed SRC2 can be visualized as a matrix of 8 x 8 bins.
 
-.. figure:: images/CoveragePkg/Page13-2.png
+.. figure:: _static/images/CoveragePkg/Page13-2.png
    :width: 448px
 
 
@@ -524,7 +524,7 @@ pairs. This is slightly less than 5X more iterations than the 64 in the ideal ca
 315 ≈ 64 \* log(64). By changing the seed value, the exact number of randomizations may increase or decrease but this
 would be a silly way to try to reduce the number of iterations a test runs.
 
-.. figure:: images/CoveragePkg/Page15-3.png
+.. figure:: _static/images/CoveragePkg/Page15-3.png
    :width: 368px
 
 

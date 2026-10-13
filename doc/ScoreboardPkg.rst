@@ -14,7 +14,7 @@ A basic usage of a scoreboard is:
 
 This is shown in the figure below.
 
-.. figure:: images/ScoreboardPkg/Page03-1.png
+.. figure:: _static/images/ScoreboardPkg/Page03-1.png
    :width: 453px
 
 

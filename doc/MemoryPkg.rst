@@ -599,7 +599,7 @@ The sparse memory data structure used by each element in the dynamic array of me
 to a block of storage elements. A block of storage elements is nominally an array of 1024 values. This structure is
 shown in :ref:`Figure 1 <UTILITY/MemoryPkg/Figure1>`.
 
-.. figure:: images/MemoryPkg/Figure01.png
+.. figure:: _static/images/MemoryPkg/Figure01.png
    :width: 342px
    :name: UTILITY/MemoryPkg/Figure1
 
