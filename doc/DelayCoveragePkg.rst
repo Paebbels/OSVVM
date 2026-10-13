@@ -3,11 +3,6 @@
 DelayCoveragePkg
 ################
 
-.. _UTILITY/DelayCoveragePkg/Overview:
-
-Overview
-********
-
 :vhdlcode:`DelayCoveragePkg` implements a pattern for randomizing cycle-based delays such as AXI’s Valid and Ready
 signals.
 

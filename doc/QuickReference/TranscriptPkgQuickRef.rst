@@ -3,11 +3,6 @@
 TranscriptPkg Quick Reference
 #############################
 
-.. _UTILITY/TranscriptPkgQuickRef/Overview:
-
-Overview
-********
-
 All OSVVM printing uses the transcript capability. If the :vhdlcode:`TranscriptFile` is open, all OSVVM printing will go
 to it. If the :vhdlcode:`TranscriptFile` is not open all OSVVM printing will go to OUTPUT (stdout). If the
 :vhdlcode:`TranscriptFile` is open and transcript mirroring is enabled, printing will go to both the

@@ -3,11 +3,6 @@
 Functional Coverage Using CoveragePkg
 #####################################
 
-.. _UTILITY/CoveragePkg/Overview:
-
-Overview
-********
-
 The VHDL package, :vhdlcode:`CoveragePkg`, provides subprograms that facilitate implementation of functional coverage
 within VHDL. It is a core part of the Open Source VHDL Verification Methodology (OSVVM). While :vhdlcode:`CoveragePkg`
 is just a package, it offers a similar conciseness to the language syntax of other verification languages, such as

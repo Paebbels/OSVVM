@@ -3,11 +3,6 @@
 Transcript Package
 ##################
 
-.. _UTILITY/TranscriptPkg/TranscriptPkgAndTranscriptBasePkgOverview:
-
-TranscriptPkg and TranscriptBasePkg Overview
-********************************************
-
 :vhdlcode:`TranscriptPkg` allows different parts of a testbench to use a common transcript file. As such, it provides
 means to open (:vhdlcode:`TranscriptOpen`) and close (:vhdlcode:`TranscriptClose`) the transcript file. In addition, it
 provides a variety of printing capabilities.

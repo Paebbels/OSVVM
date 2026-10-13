@@ -3,11 +3,6 @@
 OsvvmGlobalPkg
 ##############
 
-.. _UTILITY/OsvvmGlobalPkg/OsvvmGlobalPkgOverview:
-
-OsvvmGlobalPkg Overview
-***********************
-
 Release 2024.03 deprecated most of the functionality in this package. At this point, only
 :vhdlcode:`OsvvmOptionsType`, :vhdlcode:`IsEnabled`, and :vhdlcode:`to_OsvvmOptionsType` remain.
 :vhdlcode:`OsvvmOptionsType` is used with :vhdlcode:`SetAlertLogOptions` and

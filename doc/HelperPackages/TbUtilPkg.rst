@@ -3,11 +3,6 @@
 TbUtilPkg
 #########
 
-.. _UTILITY/TbUtilPkg/TbUtilPkgOverview:
-
-TbUtilPkg Overview
-******************
-
 :vhdlcode:`TbUtilPkg` provides testbench utilities including synchronization utilities, tests for mutual exclusion,
 clock creation and reset creation.
 

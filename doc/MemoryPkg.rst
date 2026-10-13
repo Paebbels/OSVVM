@@ -3,11 +3,6 @@
 MemoryGenericPkg
 ################
 
-.. _UTILITY/MemoryPkg/MemoryGenericPkgOverview:
-
-MemoryGenericPkg Overview
-*************************
-
 The :vhdlcode:`MemoryGenericPkg` provides an efficient, sparse memory structure and an API that simplifies the creation
 of memory models. The memory data structure reduces the amount of memory used during a simulation and hence improves
 performance.

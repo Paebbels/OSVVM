@@ -3,11 +3,6 @@
 ResolutionPkg
 #############
 
-.. _UTILITY/ResolutionPkg/ResolutionPkgOverview:
-
-ResolutionPkg Overview
-**********************
-
 :vhdlcode:`ResolutionPkg` provides resolution functions used to resolve elements of a record. OSVVM uses records as a
 means of implementing its transaction interfaces.
 

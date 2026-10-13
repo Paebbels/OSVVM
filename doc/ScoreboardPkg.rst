@@ -3,11 +3,6 @@
 Scoreboard Generic Package
 ##########################
 
-.. _UTILITY/ScoreboardPkg/ScoreboardGenericPkgOverview:
-
-ScoreboardGenericPkg Overview
-*****************************
-
 A scoreboard is a data structure used for self-checking in an environment where inputs are closely related to outputs,
 such as in data transmission (UART, AxiStream, …).
 

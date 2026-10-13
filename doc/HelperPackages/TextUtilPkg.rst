@@ -3,11 +3,6 @@
 TextUtilPkg
 ###########
 
-.. _UTILITY/TextUtilPkg/TextUtilPkgOverview:
-
-TextUtilPkg Overview
-********************
-
 :vhdlcode:`TextUtilPkg` provides basic string handling and reading utilities.
 
 .. _UTILITY/TextUtilPkg/CharacterTests:

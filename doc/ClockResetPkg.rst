@@ -3,11 +3,6 @@
 ClockResetPkg
 #############
 
-.. _UTILITY/ClockResetPkg/ClockResetPkgOverview:
-
-ClockResetPkg Overview
-**********************
-
 :vhdlcode:`ClockResetPkg` provides testbench utilities for creating clock and reset.
 
 .. _UTILITY/ClockResetPkg/CreateClock:

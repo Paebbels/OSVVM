@@ -3,11 +3,6 @@
 IfElsePkg
 #########
 
-.. _UTILITY/IfElsePkg/IfElsePkgOverview:
-
-IfElsePkg Overview
-******************
-
 :vhdlcode:`IfElsePkg` provides a function that returns one of two input values based on a conditional. It is a stand in
 for the "when else" language capability that is in VHDL-2019 (but is not currently supported by all simulators).
 

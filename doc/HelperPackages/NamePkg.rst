@@ -3,11 +3,6 @@
 NamePkg
 #######
 
-.. _UTILITY/NamePkg/NamePkgOverview:
-
-NamePkg Overview
-****************
-
 :vhdlcode:`NamePkg` provides a basic set and get functionality for string based names. It is used to create names within
 other packages in OSVVM. It can also be used by itself as a holder of names for a model.
 

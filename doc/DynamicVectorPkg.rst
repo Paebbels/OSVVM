@@ -3,11 +3,6 @@
 Dynamic Vector
 ##############
 
-.. _UTILITY/DynamicVectorPkg/DynamicVectorGenericPkgOverview:
-
-DynamicVectorGenericPkg Overview
-********************************
-
 A dynamic vector is a resizable vector. Like a vector it supports random access to elements via indices. The indices are
 numbered 0 to N-1, where N is the number of elements in the vector. As a data structure, it supports insertion and
 deletion, but it is optimized for insertion and deletion at the end of the vector (index N-1).

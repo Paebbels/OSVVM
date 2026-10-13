@@ -3,11 +3,6 @@
 Randomization Using RandomPkg
 #############################
 
-.. _UTILITY/RandomPkg/RandomPkgOverview:
-
-RandomPkg Overview
-******************
-
 :vhdlcode:`RandomPkg` provides a set of utilities for randomizing a value in a range, a value in a set, or a value with
 a weighted distribution.
 

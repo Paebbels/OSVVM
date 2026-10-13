@@ -3,11 +3,6 @@
 VendorCovApiPkg
 ###############
 
-.. _UTILITY/VendorCovApiPkg/VendorCovApiPkgOverview:
-
-VendorCovApiPkg Overview
-************************
-
 :vhdlcode:`VendorCovApiPkg` provides an interface between the creation of coverage and recording of coverage in OSVVM
 :vhdlcode:`CoveragePkg` and a simulator.
 

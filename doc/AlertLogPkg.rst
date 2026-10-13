@@ -3,11 +3,6 @@
 AlertLogPkg and ReportPkg
 #########################
 
-.. _UTILITY/AlertLogPkg/AlertLogPkgAndReportPkgOverview:
-
-AlertLogPkg and ReportPkg Overview
-**********************************
-
 Error reporting and messaging is an important part of any testbench. :vhdlcode:`AlertLogPkg` adds the capabilities of
 Logs, Alerts, and Affirmations.
 

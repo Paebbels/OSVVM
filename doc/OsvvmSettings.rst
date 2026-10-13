@@ -3,11 +3,6 @@
 OSVVM Settings
 ##############
 
-.. _UTILITY/OsvvmSettings/OSVVMSettingsOverview:
-
-OSVVM Settings Overview
-***********************
-
 OSVVM supports Tcl script settings in :file:`OsvvmSettingsLocal.tcl` and VHDL settings in
 :file:`OsvvmScriptSettingsPkg.vhd` and :file:`OsvvmSettingsPkg.vhd`.
 
